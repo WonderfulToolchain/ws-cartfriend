@@ -15,27 +15,14 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
+#include <string.h>
 #include <ws.h>
-#include "driver.h"
+#include "lang.h"
+#include "ui.h"
 #include "util.h"
-#include "wonderful-asm-common.h"
-#include "ws/hardware.h"
 
-void launch_slot(uint16_t slot, uint16_t bank) {
-    // wait for vblank, disable display, reset some registers
-    wait_for_vblank();
-    outportw(IO_DISPLAY_CTRL, 0);
-    outportb(IO_SPR_BASE, 0);
-    outportb(IO_SPR_FIRST, 0);
-    outportb(IO_SPR_COUNT, 0);
-    outportb(IO_SCR1_SCRL_X, 0);
-    outportb(IO_SCR1_SCRL_Y, 0);
-    outportb(IO_SCR2_SCRL_X, 0);
-    outportb(IO_SCR2_SCRL_Y, 0);
-    outportb(IO_SCR2_SCRL_Y, 0);
-    outportb(IO_HWINT_VECTOR, 0);
-    outportb(IO_HWINT_ENABLE, 0);
-
-    // launch!
-    driver_launch_slot(0, slot, bank);
+void ui_settings(void) {
+    while (ui_poll_events()) {
+        wait_for_vblank();
+    }
 }

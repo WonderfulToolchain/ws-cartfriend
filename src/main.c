@@ -23,7 +23,9 @@
 #include "ui.h"
 #include "util.h"
 #include "wonderful-asm.h"
+#include "ws/hardware.h"
 #include "ws/keypad.h"
+#include "ws/system.h"
 
 volatile uint8_t vbl_ticks;
 
@@ -31,13 +33,13 @@ __attribute__((interrupt))
 void vblank_int_handler(void) {
 	vbl_ticks++;
 	vblank_input_update();
-	system_ack_hw_int(INTR_MASK_VBLANK);
+	ws_hwint_ack(HWINT_VBLANK);
 }
 
 void main(void) {
 	cpu_irq_disable();
 
-	outportb(IO_INT_ENABLE, INTR_ENABLE_VBLANK);
+	outportb(IO_HWINT_ENABLE, HWINT_VBLANK);
 
 	*((uint16_t*) 0x0038) = FP_OFF(vblank_int_handler);
 	*((uint16_t*) 0x003A) = FP_SEG(vblank_int_handler);
@@ -61,6 +63,12 @@ void main(void) {
 			break;
 		case UI_TAB_ABOUT:
 			ui_about();
+			break;
+		case UI_TAB_TOOLS:
+			ui_tools();
+			break;
+		case UI_TAB_SETTINGS:
+			ui_settings();
 			break;
 		}
 	}

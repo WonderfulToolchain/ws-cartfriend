@@ -35,7 +35,8 @@ void ui_puts_centered(bool alt_screen, uint8_t y, const char __far* buf, uint8_t
 __attribute__((format(printf, 5, 6))) void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
 __attribute__((format(printf, 4, 5))) void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...);
 
-#define UI_GLYPH_ARROW_RIGHT 26
+#define UI_GLYPH_ARROW_RIGHT 16
+#define UI_GLYPH_ARROW_LEFT 17
 #define UI_GLYPH_TRIANGLE_UR 272
 
 // Tabs
@@ -45,8 +46,10 @@ void ui_set_current_tab(uint8_t tab);
 bool ui_poll_events(void);
 
 #define UI_TAB_BROWSE 0
-#define UI_TAB_ABOUT 1
-#define UI_TAB_TOTAL 2
+#define UI_TAB_TOOLS 1
+#define UI_TAB_SETTINGS 2
+#define UI_TAB_ABOUT 3
+#define UI_TAB_TOTAL 4
 
 // Work indicator
 
@@ -65,5 +68,7 @@ uint8_t ui_menu_select(uint8_t *menu_list, ui_menu_draw_line_func draw_line_func
 
 void ui_about(void); // ui_about.c
 void ui_browse(void); // ui_browse.c
+void ui_settings(void); // ui_settings.c
+void ui_tools(void); // ui_tools.c
 
 #endif

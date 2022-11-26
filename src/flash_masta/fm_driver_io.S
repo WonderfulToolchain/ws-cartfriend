@@ -92,7 +92,7 @@ driver_unlock:
 	ASM_PLATFORM_RET
 
 driver_init:
-	call _avr_wake
+	/* call _avr_wake
 
 	// figure out what slot we're on, since we're unlocking
 	// FIXME: This doesn't work right.
@@ -131,7 +131,7 @@ driver_init:
 	mov [fm_initial_slot+6], al
 	call _rtc_read_data_al
 
-	call _avr_sleep 
+	call _avr_sleep */
 
 	xor al, al
 	mov [fm_initial_slot], al

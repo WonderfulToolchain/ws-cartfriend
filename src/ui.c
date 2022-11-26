@@ -24,6 +24,7 @@
 #include "../res/font_default.h"
 #include "nanoprintf.h"
 #include "util.h"
+#include "ws/display.h"
 
 #define SCREEN1 ((uint16_t*) 0x1800)
 #define SCREEN2 ((uint16_t*) 0x3800)
@@ -42,7 +43,7 @@ void ui_init(void) {
     outportb(IO_SCR2_SCRL_Y, 0);
 
     // set palettes (mono)
-    video_shade_lut_set(GRAY_LUT(0, 2, 4, 6, 8, 10, 12, 15));
+    ws_display_set_shade_lut(SHADE_LUT(0, 2, 4, 6, 8, 10, 12, 15));
     outportw(0x20, 7 << 4);
     outportw(0x22, 7);
     outportw(0x24, 5 << 4 | 2);
@@ -96,7 +97,7 @@ void ui_scroll(int8_t offset) {
 void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color) {
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
-    video_screen_put(screen, prefix | chr, x++, y);
+    ws_screen_put(screen, prefix | chr, x++, y);
 }
 
 void ui_fill_line(uint8_t y, uint8_t color) {
@@ -111,7 +112,7 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, const char __far* buf, uint8
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
     while (*buf != '\0') {
-        video_screen_put(screen, prefix | *(buf++), x++, y);
+        ws_screen_put(screen, prefix | *(buf++), x++, y);
         if (x == 28) return;
     }
 }
@@ -144,6 +145,8 @@ void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __
 
 static uint16_t __far ui_tabs_to_lks[] = {
     LK_UI_HEADER_BROWSE,
+    LK_UI_HEADER_TOOLS,
+    LK_UI_HEADER_SETTINGS,
     LK_UI_HEADER_ABOUT,
     LK_TOTAL
 };
@@ -182,7 +185,16 @@ void ui_set_current_tab(uint8_t tab) {
     }
 
     if (!finished) {
+        ui_putc(true, 26, 0, 0, 2);
         ui_putc(true, 27, 0, UI_GLYPH_ARROW_RIGHT, 2);
+    }
+
+    if (ui_current_tab > 0) {
+        ui_putc(true, 25, 0, 0, 2);
+        ui_putc(true, 26, 0, UI_GLYPH_ARROW_LEFT, 2);
+        if (finished) {
+            ui_putc(true, 27, 0, 0, 2);
+        }
     }
 }
 
@@ -192,11 +204,13 @@ bool ui_poll_events(void) {
     if (input_pressed & KEY_ALEFT) {
         if (ui_current_tab > 0) {
             ui_set_current_tab(ui_current_tab - 1);
+            wait_for_vblank();
             return false;
         }
     } else if (input_pressed & KEY_ARIGHT) {
         if (ui_current_tab < (UI_TAB_TOTAL - 1)) {
             ui_set_current_tab(ui_current_tab + 1);
+            wait_for_vblank();
             return false;
         }
     }

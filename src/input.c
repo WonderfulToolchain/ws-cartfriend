@@ -27,7 +27,7 @@ uint16_t input_keys_released = 0;
 uint16_t input_pressed, input_held;
 
 void vblank_input_update(void) {
-	uint16_t keys = keypad_scan();
+	uint16_t keys = ws_keypad_scan();
 	input_keys |= keys;
 	input_keys_repressed |= (keys & input_keys_released);
 	input_keys_released |= (input_held & (~keys));
