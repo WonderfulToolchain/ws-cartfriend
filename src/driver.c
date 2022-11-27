@@ -24,6 +24,7 @@
 static void clear_registers(void) {
     // wait for vblank, disable display, reset some registers
     wait_for_vblank();
+    cpu_irq_disable();
     outportw(IO_DISPLAY_CTRL, 0);
     outportb(IO_SPR_BASE, 0);
     outportb(IO_SPR_FIRST, 0);
@@ -38,6 +39,7 @@ static void clear_registers(void) {
 }
 
 void launch_slot(uint16_t slot, uint16_t bank) {
+    driver_unlock();
     clear_registers();
     driver_launch_slot(0, slot, bank);
 }

@@ -29,67 +29,53 @@
 	.intel_syntax noprefix
 	.global driver_read_slot
 	.global driver_write_slot
-	.global driver_erase_slot_bank
+	.global driver_erase_bank
 	.global driver_launch_slot
 	.global fm_initial_slot
 
-	.section .rodata
+	.section .text
 	.align 2
-driver_launch_slot:
-	cli
-
-	call _driver_switch_slot
-
+driver_launch_slot_relocated:
 	// initialize RAM banks
 	mov al, 0xFF
 	out 0xC1, al
+
 	// initialize ROM banks
 	mov al, cl
-	or cl, 0xF
+	or al, 0xF
 	out 0xC2, al
 	out 0xC3, al
-	shr cl, 4
-	or cl, 0xF0
+	ror al, 4
 	out 0xC0, al
 
-	// lock Flash Masta
+	// lock cartridge
 	mov al, 0x08
 	out 0xCD, al
-	xor al, al
-	out 0xCC, al
-	// memory clearing will take enough time
-	// call _driver_change_loop
-
 	xor ax, ax
-	mov ds, ax
-	mov es, ax
+	out 0xCC, al
 
-	// restore a few registers (ones not used later) here already
+	// clear (almost) all memory we can (rep stosw in relocated part)
+	mov di, ax
+	mov cx, 0x20
+	rep stosw
+
+	mov di, 0x58
+	mov cx, 0xFE0
+	rep stosw
+
+	// restore partial register state
 	mov	bx, [0x42]
 	mov [0x42], ax
 	mov	dx, [0x46]
 	mov [0x46], ax
+	mov	si, [0x4C]
+	mov [0x4C], ax
 
-	// move relocated driver to what i think is the safest place, and jump there
-	mov si, offset driver_launch_slot_relocated
-	mov di, 0x2000
-	mov cx, offset driver_launch_slot_end
-	sub cx, si
-	rep movsb
-
-	// clear (almost) all memory we can (rep stosw in relocated part)
-	mov di, 0
-	mov cx, 0x1000
-	jmp 0x2000
-
-	.align 2
-driver_launch_slot_relocated:
+	mov di, offset ((driver_launch_slot_end + 1 - driver_launch_slot_relocated + 0x2000) & 0xFFFE)
+	mov cx, offset ((0x4000 >> 1) - ((driver_launch_slot_end + 1 - driver_launch_slot_relocated + 0x2000) >> 1))
 	rep stosw
 
-	mov di, 0x2070
-	mov cx, 0x0FC8
-	rep stosw
-
+driver_launch_slot_restore:
 	// restore register state
 	mov cx, [0x56]
 	push cx
@@ -99,32 +85,60 @@ driver_launch_slot_relocated:
 	mov	cx, [0x44]
 	mov	sp, [0x48]
 	mov	bp, [0x4A]
-	mov	si, [0x4C]
 	mov	di, [0x4E]
 	mov	ds, [0x50]
 	mov	es, [0x52]
 	mov	ss, [0x54]
 
 	// take clearing a bit more seriously
-	mov [0x2070], ax
+	mov [0x2000], ax
 	mov ax, 0
-	// mov [0x42], ax above
+	mov [0x40], ax
 	mov [0x44], ax
-	// mov [0x46], ax above
 	mov [0x48], ax
 	mov [0x4A], ax
-	mov [0x4C], ax
 	mov [0x4E], ax
 	mov [0x50], ax
 	mov [0x52], ax
 	mov [0x54], ax
 	mov [0x56], ax
-	mov ax, [0x2070]
+	mov ax, [0x2000]
 
 	// fly me to the moon
 	jmp 0xFFFF,0x0000
-	.align 2
 driver_launch_slot_end:
+
+	.section .rodata
+	.align 2
+driver_launch_slot:
+	push cx
+
+	// move relocated driver to what i think is the safest place
+	// do this before clearing banks - we can keep the code in ROM this way
+	xor ax, ax
+	mov es, ax
+	//mov   ax, offset "driver_launch_slot_relocated!"
+	.byte   0xB8
+	.reloc  ., R_386_SEG16, "driver_launch_slot_relocated!"
+	.word   0
+	//
+	mov ds, ax
+	mov si, offset driver_launch_slot_relocated
+	mov di, 0x2000
+	mov cx, offset ((driver_launch_slot_end - driver_launch_slot_relocated + 1) >> 1)
+	rep movsw
+	
+	pop cx
+
+	// restore DS
+	xor ax, ax
+	mov ds, ax
+
+	// switch ROM slot, return to 0x2000
+	mov byte ptr [_driver_current_slot], 0xFF
+	mov ax, 0x2000
+	push ax
+	jmp _driver_switch_slot
 
 _rtc_wait_ready:
 	push ax
@@ -180,12 +194,44 @@ _driver_switch_slot_equal:
 	pop ax
 	ret
 
-// cx = bank
+// preserves AX
+// CX = bank
 _driver_switch_slot_bank1:
+	cli
 	push ax
+	in al, 0xC3
+	mov [_driver_bank_temp], al
 	mov al, cl
 	out 0xC3, al
 	jmp _driver_switch_slot1
+// clobbers AX, DL
+_driver_unswitch_slot_bank1:
+	mov al, [_driver_bank_temp]
+	out 0xC3, al
+_driver_unswitch_slot:
+	mov dl, [fm_initial_slot]
+	call _driver_switch_slot
+	sti
+	ret
+
+// preserves AX
+_driver_switch_slot_sram:
+	cli
+	push ax
+	in al, 0xC1
+	mov [_driver_bank_temp], al
+	mov al, 1
+	out 0xCE, al
+	mov al, cl
+	out 0xC1, al
+	jmp _driver_switch_slot1
+// clobbers AX, DL
+_driver_unswitch_slot_sram:
+	xor al, al
+	out 0xCE, al
+	mov al, [_driver_bank_temp]
+	out 0xC1, al
+	jmp _driver_unswitch_slot
 
 driver_read_slot:
 	push	si
@@ -196,8 +242,6 @@ driver_read_slot:
 	mov	bp, sp
 
 	mov di, ax
-
-	cli
 	call _driver_switch_slot_bank1
 
 	mov bx, 0x3000
@@ -218,15 +262,22 @@ _drs_no_byte:
 	pop	es
 	pop	ds
 
-	mov dl, [fm_initial_slot]
-	call _driver_switch_slot
-	sti
+	call _driver_unswitch_slot_bank1
 	mov al, 1
 
+_drs_postamble:
 	pop	di
 	pop	si
 
 	ASM_PLATFORM_RET 0x4
+
+// clobbers AX, assumes ES:BX == 1000:0AAA
+driver_flash_busyloop_until_done:
+	mov ah, byte ptr es:[bx]
+	mov al, byte ptr es:[bx]
+	cmp ah, al // DQ2 and/or DQ6 toggles if status register
+	jne driver_flash_busyloop_until_done
+	ret
 
 driver_write_slot:
 	push	si
@@ -237,24 +288,79 @@ driver_write_slot:
 	mov	bp, sp
 
 	mov si, ax
-
-	cli
-	call _driver_switch_slot_bank1
-
-	mov bx, 0x3000
-	mov	es, bx
-	xor bx, bx
-	mov ds, bx
+	call _driver_switch_slot_sram
 
 	mov di, [bp + 14]
-	jmp _drs_part2
+	mov	cx, [bp + 16]
 
-driver_erase_slot:
-	// TODO
-	mov al, 0
+	xor bx, bx
+	mov ds, bx
+	mov bx, 0x1000
+	mov es, bx
+	mov bx, 0xAAA
+
+	// start bypass
+	mov byte ptr es:[bx], 0xAA
+	mov byte ptr es:[0x555], 0x55
+	mov byte ptr es:[bx], 0x20
+
+_dws_loop:
+	mov byte ptr es:[bx], 0xA0
+	movsb // 3 cycles
+	call driver_flash_busyloop_until_done
+	loop _dws_loop // 5 cycles
+
+	// stop bypass
+	mov byte ptr es:[bx], 0x90
+	mov byte ptr es:[bx], 0x00
+
+	pop	bp
+	pop	es
+	pop	ds
+
+	call _driver_unswitch_slot_sram
+	mov al, 1
+
+	jmp _drs_postamble
+
+driver_erase_bank:
+	xor al, al
+	test cl, 1
+	jnz driver_erase_bank_finish
+	and cl, 0xFE
+
+	push es
+	push di
+
+	call _driver_switch_slot_sram
+
+	// execute erase command
+	mov bx, 0x1000
+	mov es, bx
+	mov bx, 0xAAA
+	mov di, 0x555
+
+	mov byte ptr es:[bx], 0xAA
+	mov byte ptr es:[di], 0x55
+	mov byte ptr es:[bx], 0x80
+	mov byte ptr es:[bx], 0xAA
+	mov byte ptr es:[di], 0x55
+	xor bx, bx
+	mov byte ptr es:[bx], 0x30
+
+	call driver_flash_busyloop_until_done
+
+	call _driver_unswitch_slot_sram
+	mov al, 1
+
+	pop di
+	pop es
+driver_erase_bank_finish:
 	ASM_PLATFORM_RET
 
 	.section .bss
+_driver_bank_temp:
+	.byte 0
 _driver_current_slot:
 	.byte 0
 fm_initial_slot:

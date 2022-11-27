@@ -59,7 +59,6 @@ void ui_browse(void) {
 
     uint8_t result = ui_menu_select(menu_list, ui_browse_menu_draw_line);
     if (result < 16) {
-        driver_unlock();
-        driver_launch_slot(0, result, 0xFF);
+        launch_slot(result, 0xFF);
     }
 }

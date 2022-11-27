@@ -24,12 +24,13 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <wonderful-asm.h>
 #include "../driver.h"
 
 extern uint8_t fm_initial_slot;
 
 uint8_t driver_get_launch_slot(void) {
-    return fm_initial_slot;
+    return (_CS < 0x2000) ? 0xFF : fm_initial_slot;
 }
 
 bool driver_supports_slots(void) {

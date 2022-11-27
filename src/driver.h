@@ -31,10 +31,10 @@ void driver_lock(void);
 void driver_unlock(void);
 bool driver_read_slot(void *ptr, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len);
 bool driver_write_slot(const void *data, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len);
-bool driver_erase_slot_bank(uint16_t slot, uint16_t bank);
-void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank);
+bool driver_erase_bank(uint16_t unused, uint16_t slot, uint16_t bank);
+void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank); // unlock first, lock in function 
 uint8_t driver_get_launch_slot(void);
 bool driver_supports_slots(void);
 
-void launch_slot(uint16_t slot, uint16_t bank);
+void launch_slot(uint16_t slot, uint16_t bank); // unlocks automatically
 void launch_sram(void);

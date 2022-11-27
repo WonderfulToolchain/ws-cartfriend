@@ -16,12 +16,12 @@
  */
 
 #include <string.h>
+#include <wonderful-asm.h>
 #include <ws.h>
 #include "driver.h"
 #include "lang.h"
 #include "ui.h"
 #include "util.h"
-#include "wonderful-asm-common.h"
 #include "xmodem.h"
 
 #define MENU_TOOL_SRAMCODE_XM 0
@@ -92,7 +92,7 @@ static void ui_tool_sramcode_xm() {
 void ui_tools(void) {
     uint8_t menu_list[16];
     uint8_t i = 0;
-    menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
+    if ((_CS & 0xF000) != 0x1000) menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
     menu_list[i++] = MENU_ENTRY_END;
 
     uint8_t result = ui_menu_select(menu_list, ui_tool_menu_draw_line);

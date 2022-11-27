@@ -41,7 +41,7 @@ void driver_unlock(void) {
 }
 
 uint8_t driver_get_launch_slot(void) {
-    return 0;
+    return 0xFF;
 }
 
 bool driver_read_slot(void *ptr, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len) {
@@ -52,7 +52,7 @@ bool driver_write_slot(const void *data, uint16_t slot, uint16_t bank, uint16_t 
     return false;
 }
 
-bool driver_erase_slot_bank(uint16_t slot, uint16_t bank) {
+bool driver_erase_bank(uint16_t unused, uint16_t slot, uint16_t bank) {
     return false;
 }
 

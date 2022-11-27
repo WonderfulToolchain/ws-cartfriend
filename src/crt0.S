@@ -78,6 +78,9 @@ _start:
 	xor	ax, ax
 	mov	ds, ax
 
+	// clear int enable
+	out 0xB2, al
+
 	// clear bss
 	mov	di, offset "__edata"
 	mov	cx, offset "__lbss_words"
