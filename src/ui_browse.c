@@ -23,17 +23,15 @@
 #include "ui.h"
 #include "util.h"
 
-void ui_browse_menu_draw_line(uint8_t entry_id, uint8_t y, uint8_t color) {
+static void ui_browse_menu_draw_line(uint8_t entry_id, uint8_t y, uint8_t color) {
     if (entry_id < 16) {
-        ui_printf(false, 1, y, color, lang_keys[LK_UI_ENTRY_SLOT], entry_id + 1);
+        ui_printf(false, 1, y, color, lang_keys[LK_UI_BROWSE_SLOT], entry_id + 1);
     }
 }
 
-void ui_browse(void) {
-    uint8_t menu_list[129];
-    uint8_t i = 0;
+static uint8_t iterate_carts(uint8_t *menu_list, uint8_t i) {
     uint8_t buffer[16];
-    // generate menu list
+
     ui_step_work_indicator();
     driver_unlock();
     for (uint8_t slot = 0; slot <= 15; slot++) {
@@ -49,8 +47,15 @@ void ui_browse(void) {
     }
     driver_lock();
 
+    return i;
+}
+
+void ui_browse(void) {
+    uint8_t menu_list[257];
+    uint8_t i = 0;
+
+    i = iterate_carts(menu_list, i);
     menu_list[i++] = MENU_ENTRY_END;
-    ui_clear_work_indicator();
 
     uint8_t result = ui_menu_select(menu_list, ui_browse_menu_draw_line);
     if (result < 16) {

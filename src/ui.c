@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ws.h>
+#include "driver.h"
 #include "input.h"
 #include "lang.h"
 #include "ui.h"
@@ -71,7 +72,7 @@ void ui_init(void) {
     }
 
     outportb(IO_SCR_BASE, SCR1_BASE((uint16_t) SCREEN1) | SCR2_BASE((uint16_t) SCREEN2));
-    ui_puts(true, 28 - strlen(lang_keys[LK_NAME]), 17, lang_keys[LK_NAME], 2);
+    ui_puts(true, 28 - strlen(lang_keys[LK_NAME]), 17, 2, lang_keys[LK_NAME]);
 }
 
 void ui_show(void) {
@@ -108,7 +109,7 @@ void ui_fill_line(uint8_t y, uint8_t color) {
     }
 }
 
-void ui_puts(bool alt_screen, uint8_t x, uint8_t y, const char __far* buf, uint8_t color) {
+void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* buf) {
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
     while (*buf != '\0') {
@@ -117,9 +118,9 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, const char __far* buf, uint8
     }
 }
 
-void ui_puts_centered(bool alt_screen, uint8_t y, const char __far* buf, uint8_t color) {
+void ui_puts_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* buf) {
     uint8_t x = 14 - (strlen(buf) >> 1);
-    ui_puts(alt_screen, x, y, buf, color);
+    ui_puts(alt_screen, x, y, color, buf);
 }
 
 void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...) {
@@ -128,7 +129,7 @@ void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char 
     va_start(val, format);
     npf_vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
-    ui_puts(alt_screen, x, y, buf, color);
+    ui_puts(alt_screen, x, y, color, buf);
 }
 
 void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...) {
@@ -138,7 +139,7 @@ void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __
     npf_vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
     uint8_t x = 14 - (strlen(buf) >> 1);
-    ui_puts(alt_screen, x, y, buf, color);
+    ui_puts(alt_screen, x, y, color, buf);
 }
 
 // Tabs
@@ -152,8 +153,16 @@ static uint16_t __far ui_tabs_to_lks[] = {
 };
 uint8_t ui_current_tab;
 
+static bool ui_hack_show_browse_tab(void) {
+    return driver_supports_slots();
+}
+
 void ui_set_current_tab(uint8_t tab) {
     ui_current_tab = tab;
+    if (tab == 0 && !ui_hack_show_browse_tab()) {
+        ui_current_tab = 1;
+        tab = 1;
+    }
 
     uint8_t x = 0;
     bool active = true;
@@ -189,7 +198,7 @@ void ui_set_current_tab(uint8_t tab) {
         ui_putc(true, 27, 0, UI_GLYPH_ARROW_RIGHT, 2);
     }
 
-    if (ui_current_tab > 0) {
+    if (ui_current_tab > 1 || (ui_current_tab == 1 && ui_hack_show_browse_tab())) {
         ui_putc(true, 25, 0, 0, 2);
         ui_putc(true, 26, 0, UI_GLYPH_ARROW_LEFT, 2);
         if (finished) {
@@ -282,6 +291,8 @@ static void ui_menu_move(ui_menu_state_t *menu, int8_t delta) {
 }
 
 uint8_t ui_menu_select(uint8_t *menu_list, ui_menu_draw_line_func draw_line_func) {
+    ui_clear_work_indicator();
+
     ui_menu_state_t menu;
     menu.list = menu_list;
     menu.draw_line_func = draw_line_func;
@@ -290,13 +301,15 @@ uint8_t ui_menu_select(uint8_t *menu_list, ui_menu_draw_line_func draw_line_func
     menu.y = 0;
     menu.y_max = menu.height - 16;
     if (menu.y_max < 0) menu.y_max = 0;
-    
-    for (uint8_t i = 0; i < 16; i++) {
-        if (i >= menu.height) break;
-        draw_line_func(menu_list[i], i, 0);
+ 
+    if (menu.height > 0) {
+        for (uint8_t i = 0; i < 16; i++) {
+            if (i >= menu.height) break;
+            draw_line_func(menu_list[i], i, 0);
+        }
+        ui_fill_line(0, 1);
+        draw_line_func(menu_list[0], 0, 1);
     }
-    ui_fill_line(0, 1);
-    draw_line_func(menu_list[0], 0, 1);
 
     while (ui_poll_events()) {
         if (input_pressed & KEY_UP) {

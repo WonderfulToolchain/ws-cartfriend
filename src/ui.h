@@ -1,3 +1,4 @@
+#pragma once
 /**
  * Copyright (c) 2022 Adrian Siekierka
  *
@@ -15,9 +16,6 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-#ifndef __UI_H__
-#define __UI_H__
-
 #include <stdbool.h>
 #include <stdint.h>
 #include "../res/lang.h"
@@ -29,9 +27,10 @@ void ui_show(void);
 void ui_hide(void);
 void ui_reset_main_screen(void);
 void ui_scroll(int8_t offset);
+void ui_fill_line(uint8_t y, uint8_t color);
 void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color);
-void ui_puts(bool alt_screen, uint8_t x, uint8_t y, const char __far* buf, uint8_t color);
-void ui_puts_centered(bool alt_screen, uint8_t y, const char __far* buf, uint8_t color);
+void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* buf);
+void ui_puts_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* buf);
 __attribute__((format(printf, 5, 6))) void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
 __attribute__((format(printf, 4, 5))) void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...);
 
@@ -64,11 +63,15 @@ typedef void (*ui_menu_draw_line_func)(uint8_t entry_id, uint8_t y, uint8_t colo
 
 uint8_t ui_menu_select(uint8_t *menu_list, ui_menu_draw_line_func draw_line_func);
 
+// Progress bar system
+typedef struct {
+    uint16_t step, step_max;
+    uint8_t x, y, width;
+} ui_progress_bar_t;
+
 // Tab implementations
 
 void ui_about(void); // ui_about.c
 void ui_browse(void); // ui_browse.c
 void ui_settings(void); // ui_settings.c
 void ui_tools(void); // ui_tools.c
-
-#endif

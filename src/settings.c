@@ -14,8 +14,44 @@
  * You should have received a copy of the GNU General Public License along
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
-
+#include <stdbool.h>
+#include <string.h>
+#include "config.h"
+#include "driver.h"
 #include "settings.h"
 
 settings_t settings_local;
+bool settings_changed;
 const char __far settings_magic[4] = {'w', 'f', 'C', 'F'};
+
+void settings_clear(void) {
+    memset(&settings_local, 0, sizeof(settings_local));
+    memcpy(settings_local.magic, settings_magic, sizeof(settings_magic));
+    settings_local.ver_major = SETTINGS_VERSION_MAJOR;
+    settings_local.ver_minor = SETTINGS_VERSION_MINOR;
+
+    uint8_t sram_slot = 0;
+    for (uint8_t i = 0; i < GAME_SLOTS; i++) {
+        if (i == driver_get_launch_slot()) {
+            settings_local.slot_type[i] = SLOT_TYPE_LAUNCHER;
+            settings_local.sram_slot_mapping[i] = 0xFF;
+        } else {
+            settings_local.slot_type[i] = SLOT_TYPE_GAME;
+            settings_local.sram_slot_mapping[i] = sram_slot++;
+        }
+    }
+
+    settings_changed = true;
+}
+
+void settings_load(void) {
+    settings_changed = false;
+
+    // TODO
+    settings_clear();
+}
+
+void settings_save(void) {
+    if (!settings_changed) return;
+    // TODO
+}

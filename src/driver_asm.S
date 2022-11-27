@@ -1,0 +1,87 @@
+/**
+ * CartFriend platform drivers + headers
+ *
+ * Copyright (c) 2022 Adrian "asie" Siekierka
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ *
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ *
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
+#include <wonderful-asm.h>
+
+	.arch	i186
+	.code16
+	.intel_syntax noprefix
+	.global launch_sram_asm
+
+launch_sram_asm:
+	cli
+
+	xor ax, ax
+	mov ds, ax
+	mov es, ax
+
+	// restore a few registers (ones not used later) here already
+	mov	bx, [0x42]
+	mov [0x42], ax
+	mov	dx, [0x46]
+	mov [0x46], ax
+
+	// clear (almost) all memory we can (rep stosw in relocated part)
+	mov di, 0
+	mov cx, 0x1000
+	rep stosw
+
+	mov di, 0x2070
+	mov cx, 0x0FC8
+	rep stosw
+
+	// restore register state
+	mov cx, [0x56]
+	push cx
+	popf
+	push ax // clear stack area we just used
+	mov	ax, [0x40]
+	mov	cx, [0x44]
+	mov	sp, [0x48]
+	mov	bp, [0x4A]
+	mov	si, [0x4C]
+	mov	di, [0x4E]
+	mov	ds, [0x50]
+	mov	es, [0x52]
+	mov	ss, [0x54]
+
+	// take clearing a bit more seriously
+	mov [0x2070], ax
+	mov ax, 0
+	// mov [0x42], ax above
+	mov [0x44], ax
+	// mov [0x46], ax above
+	mov [0x48], ax
+	mov [0x4A], ax
+	mov [0x4C], ax
+	mov [0x4E], ax
+	mov [0x50], ax
+	mov [0x52], ax
+	mov [0x54], ax
+	mov [0x56], ax
+	mov ax, [0x2070]
+
+	// fly me to the moon
+	jmp 0x1000,0x0000
+	.align 2

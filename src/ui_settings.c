@@ -17,12 +17,27 @@
 
 #include <string.h>
 #include <ws.h>
+#include "driver.h"
 #include "lang.h"
 #include "ui.h"
 #include "util.h"
 
+#define MENU_OPT_SAVEMAP 0
+
+static uint16_t __far ui_opt_lks[] = {
+    LK_UI_SETTINGS_SAVEMAP,
+};
+static void ui_opt_menu_draw_line(uint8_t entry_id, uint8_t y, uint8_t color) {
+    ui_puts(false, 1, y, color, lang_keys[ui_opt_lks[entry_id]]);
+}
+
 void ui_settings(void) {
-    while (ui_poll_events()) {
-        wait_for_vblank();
+    uint8_t menu_list[16];
+    uint8_t i = 0;
+    if (driver_supports_slots()) {
+        menu_list[i++] = MENU_OPT_SAVEMAP;
     }
+    menu_list[i++] = MENU_ENTRY_END;
+
+    uint8_t result = ui_menu_select(menu_list, ui_opt_menu_draw_line);
 }

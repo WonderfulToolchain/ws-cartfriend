@@ -44,7 +44,7 @@ static void draw_pattern(uint8_t i) {
 extern uint8_t fm_initial_slot[7];
 
 void ui_about(void) {
-    ui_puts_centered(false, 2, lang_keys[LK_NAME], 0);
+    ui_puts_centered(false, 2, 0, lang_keys[LK_NAME]);
     // ui_puts_centered(false, 3, lang_keys[LK_RELEASE_DATE], 0);
     ui_printf_centered(false, 3, 0, lang_keys[LK_UI_LOADED_FROM],
         (int) fm_initial_slot[0],
@@ -54,8 +54,8 @@ void ui_about(void) {
         (int) fm_initial_slot[4],
         (int) fm_initial_slot[5],
         (int) fm_initial_slot[6]);
-    ui_puts_centered(false, 12, lang_keys[LK_UI_ABOUT_URL_LINE1], 0);
-    ui_puts_centered(false, 13, lang_keys[LK_UI_ABOUT_URL_LINE2], 0);
+    ui_puts_centered(false, 12, 0, lang_keys[LK_UI_ABOUT_URL_LINE1]);
+    ui_puts_centered(false, 13, 0, lang_keys[LK_UI_ABOUT_URL_LINE2]);
 
     uint16_t i = 0;
     draw_pattern(i);

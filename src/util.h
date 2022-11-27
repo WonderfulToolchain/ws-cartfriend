@@ -1,3 +1,4 @@
+#pragma once
 /**
  * Copyright (c) 2022 Adrian Siekierka
  *
@@ -15,12 +16,7 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-#ifndef __UTIL_H__
-#define __UTIL_H__
-
 #include <stdbool.h>
 #include <stdint.h>
 
 void wait_for_vblank(void);
-
-#endif

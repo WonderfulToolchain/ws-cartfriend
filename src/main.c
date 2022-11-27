@@ -15,17 +15,13 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-#include "ui.h"
 #include <stdbool.h>
 #include <ws.h>
 #include "driver.h"
 #include "input.h"
+#include "settings.h"
 #include "ui.h"
 #include "util.h"
-#include "wonderful-asm.h"
-#include "ws/hardware.h"
-#include "ws/keypad.h"
-#include "ws/system.h"
 
 volatile uint8_t vbl_ticks;
 
@@ -38,17 +34,14 @@ void vblank_int_handler(void) {
 
 void main(void) {
 	cpu_irq_disable();
-
-	outportb(IO_HWINT_ENABLE, HWINT_VBLANK);
-
-	*((uint16_t*) 0x0038) = FP_OFF(vblank_int_handler);
-	*((uint16_t*) 0x003A) = FP_SEG(vblank_int_handler);
-
+	ws_hwint_set_handler(HWINT_IDX_VBLANK, vblank_int_handler);
+	ws_hwint_enable(HWINT_VBLANK);
 	cpu_irq_enable();
 
 	ui_init();
 	driver_init();
 
+	settings_load();
 	input_wait_clear(); // wait for input to calm down
 
 	ui_set_current_tab(UI_TAB_BROWSE);

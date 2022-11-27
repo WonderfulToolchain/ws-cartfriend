@@ -1,3 +1,4 @@
+#pragma once
 /**
  * Copyright (c) 2022 Adrian Siekierka
  *
@@ -15,13 +16,13 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-#ifndef __SETTINGS_H__
-#define __SETTINGS_H__
-
+#include <stdbool.h>
 #include <stdint.h>
 #include "config.h"
 
-#define SLOT_TYPE_UNKNOWN 0
+#define SLOT_TYPE_GAME 0
+#define SLOT_TYPE_LAUNCHER 1
+
 #define SETTINGS_VERSION_MAJOR 0
 #define SETTINGS_VERSION_MINOR 0
 
@@ -29,11 +30,15 @@ typedef struct __attribute__((packed)) {
 	uint8_t magic[4];
 	uint8_t ver_major;
 	uint8_t ver_minor; // 6
-	uint8_t slot_type[GAME_SLOTS]; // 21
-	uint8_t sram_slot_mapping[15]; // 36
+	uint8_t language; // 7
+	uint8_t slot_type[GAME_SLOTS]; // 23
+	uint8_t sram_slot_mapping[GAME_SLOTS]; // 38
 } settings_t;
 
 extern settings_t settings_local;
+extern bool settings_changed;
 extern const char __far settings_magic[4];
 
-#endif
+void settings_clear(void);
+void settings_load(void);
+void settings_save(void);

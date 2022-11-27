@@ -22,10 +22,16 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
+#include <stdbool.h>
 #include <stdint.h>
+#include "../driver.h"
 
 extern uint8_t fm_initial_slot;
 
 uint8_t driver_get_launch_slot(void) {
     return fm_initial_slot;
+}
+
+bool driver_supports_slots(void) {
+    return true;
 }

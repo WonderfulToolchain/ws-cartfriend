@@ -1,3 +1,4 @@
+#pragma once
 /**
  * CartFriend platform drivers + headers
  *
@@ -22,9 +23,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef __DRIVER_H__
-#define __DRIVER_H__
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -36,7 +34,7 @@ bool driver_write_slot(const void *data, uint16_t slot, uint16_t bank, uint16_t 
 bool driver_erase_slot_bank(uint16_t slot, uint16_t bank);
 void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank);
 uint8_t driver_get_launch_slot(void);
+bool driver_supports_slots(void);
 
 void launch_slot(uint16_t slot, uint16_t bank);
-
-#endif
+void launch_sram(void);

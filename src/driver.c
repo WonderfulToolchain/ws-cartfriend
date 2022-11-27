@@ -21,7 +21,7 @@
 #include "wonderful-asm-common.h"
 #include "ws/hardware.h"
 
-void launch_slot(uint16_t slot, uint16_t bank) {
+static void clear_registers(void) {
     // wait for vblank, disable display, reset some registers
     wait_for_vblank();
     outportw(IO_DISPLAY_CTRL, 0);
@@ -35,7 +35,16 @@ void launch_slot(uint16_t slot, uint16_t bank) {
     outportb(IO_SCR2_SCRL_Y, 0);
     outportb(IO_HWINT_VECTOR, 0);
     outportb(IO_HWINT_ENABLE, 0);
+}
 
-    // launch!
+void launch_slot(uint16_t slot, uint16_t bank) {
+    clear_registers();
     driver_launch_slot(0, slot, bank);
+}
+
+extern void launch_sram_asm(void);
+
+void launch_sram(void) {
+    clear_registers();
+    launch_sram_asm();
 }

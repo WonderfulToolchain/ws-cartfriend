@@ -1,3 +1,4 @@
+#pragma once
 /**
  * Copyright (c) 2022 Adrian Siekierka
  *
@@ -15,10 +16,5 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
-
 #define FLASH_CONFIG_SIZE 1024
-#define GAME_SLOTS 15
-
-#endif
+#define GAME_SLOTS 16

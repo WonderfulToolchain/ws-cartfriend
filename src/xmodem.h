@@ -1,5 +1,6 @@
+#pragma once
 /**
- * CartFriend platform drivers + headers
+ * CartFriend - XMODEM transfer code
  *
  * Copyright (c) 2022 Adrian "asie" Siekierka
  *
@@ -22,44 +23,26 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include <string.h>
-#include "../driver.h"
-#include "wonderful-asm.h"
+#include <stdbool.h>
+#include <stdint.h>
 
-uint8_t fm_initial_slot; // TODO: remove
+#define XMODEM_BLOCK_SIZE 128
 
-void driver_init(void) {
-    
-}
+#define XMODEM_OK          0 /* OK */
+#define XMODEM_CANCEL      1 /* user cancellation */
+#define XMODEM_SELF_CANCEL 2 /* local cancellation */
+#define XMODEM_ERROR       3 /* transfer error */
+#define XMODEM_COMPLETE    4 /* no more blocks to receive */
 
-void driver_lock(void) {
+bool xmodem_poll_exit(void);
 
-}
+void xmodem_open(uint8_t baudrate);
+void xmodem_close(void);
 
-void driver_unlock(void) {
-    
-}
+uint8_t xmodem_send_start(void);
+uint8_t xmodem_send_block(const uint8_t __far* block);
+uint8_t xmodem_send_finish(void);
 
-uint8_t driver_get_launch_slot(void) {
-    return 0;
-}
-
-bool driver_read_slot(void *ptr, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len) {
-    return false;
-}
-
-bool driver_write_slot(const void *data, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len) {
-    return false;
-}
-
-bool driver_erase_slot_bank(uint16_t slot, uint16_t bank) {
-    return false;
-}
-
-void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank) {
-    
-}
-
-bool driver_supports_slots(void) {
-    return false;
-}
+uint8_t xmodem_recv_start(void);
+uint8_t xmodem_recv_block(uint8_t __far* block);
+void xmodem_recv_ack(void);

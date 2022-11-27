@@ -1,3 +1,4 @@
+#pragma once
 /**
  * Copyright (c) 2022 Adrian Siekierka
  *
@@ -14,9 +15,6 @@
  * You should have received a copy of the GNU General Public License along
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
-
-#ifndef __INPUT_H__
-#define __INPUT_H__
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -38,5 +36,3 @@ void vblank_input_update(void);
 void input_reset(void);
 void input_update(void);
 void input_wait_clear(void);
-
-#endif /* __INPUT_H__ */
