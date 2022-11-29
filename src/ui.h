@@ -20,6 +20,13 @@
 #include <stdint.h>
 #include "../res/lang.h"
 
+#define UI_PAL_MAIN   0
+#define UI_PAL_MAINI  1
+#define UI_PAL_BAR    2
+#define UI_PAL_BARI   3
+#define UI_PAL_DIALOG 8
+#define UI_PAL_PBAR   9
+
 extern const char __far* const __far* lang_keys;
 
 void ui_init(void);
@@ -33,10 +40,11 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __
 void ui_puts_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* buf);
 __attribute__((format(printf, 5, 6))) void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
 __attribute__((format(printf, 4, 5))) void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...);
+__attribute__((format(printf, 5, 6))) void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
 
 #define UI_GLYPH_ARROW_RIGHT 16
 #define UI_GLYPH_ARROW_LEFT 17
-#define UI_GLYPH_TRIANGLE_UR 272
+#define UI_GLYPH_TRIANGLE_UR 270
 
 // Tabs
 
@@ -59,15 +67,37 @@ void ui_clear_work_indicator(void);
 
 #define MENU_ENTRY_END 255
 
-typedef void (*ui_menu_draw_line_func)(uint8_t entry_id, uint8_t y, uint8_t color);
+typedef void (*ui_menu_build_line_func)(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len);
 
-uint8_t ui_menu_select(uint8_t *menu_list, ui_menu_draw_line_func draw_line_func);
+typedef struct {
+    uint8_t *list;
+    ui_menu_build_line_func build_line_func;
+    uint16_t flags;
+
+    // auto-generated
+    uint8_t height;
+    uint8_t pos;
+    uint8_t y;
+    uint8_t y_max;
+} ui_menu_state_t;
+
+#define MENU_SEND_LEFT_RIGHT 0x0001
+#define MENU_B_AS_BACK       0x0002
+
+#define MENU_ACTION_LEFT  0x0100
+#define MENU_ACTION_RIGHT 0x0200
+
+void ui_menu_init(ui_menu_state_t *menu);
+uint16_t ui_menu_select(ui_menu_state_t *menu);
 
 // Progress bar system
 typedef struct {
     uint16_t step, step_max;
     uint8_t x, y, width;
-} ui_progress_bar_t;
+} ui_pbar_state_t;
+
+void ui_pbar_init(ui_pbar_state_t *state);
+void ui_pbar_draw(ui_pbar_state_t *state);
 
 // Tab implementations
 

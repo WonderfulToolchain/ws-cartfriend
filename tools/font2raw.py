@@ -23,11 +23,12 @@ format = sys.argv[4]
 out_filename = sys.argv[5]
 
 im = Image.open(in_filename).convert("RGBA")
+im_height = im.size[1]
 
 with open(out_filename, "wb") as fp:
 	v = 0
 	vp = 0
-	for ig in range(0, 384):
+	for ig in range(0, 32 * (im_height >> 3)):
 		igx = (ig & 31) * glyph_width
 		igy = (ig >> 5) * glyph_height
 		for iy in range(0, glyph_height):

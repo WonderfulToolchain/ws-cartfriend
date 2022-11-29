@@ -41,18 +41,6 @@ void main(void) {
 	ui_init();
 	driver_init();
 
-	driver_unlock();
-	{
-		uint8_t buffer[16];	
-		driver_read_slot(buffer, 9, 0, 16, 16);
-		if (buffer[0] != 'P') {
-			driver_erase_bank(0, 9, 0);
-			buffer[0] = 'P';
-			driver_write_slot(buffer, 9, 0, 16, 16);
-		}
-	}
-	driver_lock();
-
 	settings_load();
 	input_wait_clear(); // wait for input to calm down
 

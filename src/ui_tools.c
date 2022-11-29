@@ -29,8 +29,8 @@
 static uint16_t __far ui_tool_lks[] = {
     LK_UI_TOOLS_SRAMCODE_XM
 };
-static void ui_tool_menu_draw_line(uint8_t entry_id, uint8_t y, uint8_t color) {
-    ui_puts(false, 1, y, color, lang_keys[ui_tool_lks[entry_id]]);
+static void ui_tool_menu_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
+    strncpy(buf, lang_keys[ui_tool_lks[entry_id]], buf_len);
 }
 
 static void ui_tool_sramcode_xm() {
@@ -95,7 +95,14 @@ void ui_tools(void) {
     if ((_CS & 0xF000) != 0x1000) menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
     menu_list[i++] = MENU_ENTRY_END;
 
-    uint8_t result = ui_menu_select(menu_list, ui_tool_menu_draw_line);
+    ui_menu_state_t menu = {
+        .list = menu_list,
+        .build_line_func = ui_tool_menu_build_line,
+        .flags = 0
+    };
+    ui_menu_init(&menu);
+    
+    uint16_t result = ui_menu_select(&menu);
     switch (result) {
         case MENU_TOOL_SRAMCODE_XM: ui_tool_sramcode_xm(); break;
     }

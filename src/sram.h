@@ -16,6 +16,8 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-#define FLASH_CONFIG_SIZE 1024
-#define GAME_SLOTS 16
-#define SRAM_SLOTS 15
+#include <stdbool.h>
+#include <stdint.h>
+
+void sram_erase(uint8_t sram_slot);
+void sram_switch_to_slot(uint8_t sram_slot);

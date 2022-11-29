@@ -50,9 +50,7 @@ void ui_init(void) {
     outportw(0x24, 5 << 4 | 2);
     outportw(0x26, 2 << 4 | 5);
     outportw(0x30, 7 << 4);
-    outportw(0x32, 7);
-    outportw(0x34, 5 << 4 | 2);
-    outportw(0x36, 2 << 4 | 5);
+    outportw(0x32, 4 << 4);
 
     // install font @ 0x2000
     const uint8_t __far *font_src = _font_default_bin;
@@ -113,7 +111,7 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
     while (*buf != '\0') {
-        ws_screen_put(screen, prefix | *(buf++), x++, y);
+        ws_screen_put(screen, prefix | ((uint8_t) *(buf++)), x++, y);
         if (x == 28) return;
     }
 }
@@ -140,6 +138,15 @@ void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __
     va_end(val);
     uint8_t x = 14 - (strlen(buf) >> 1);
     ui_puts(alt_screen, x, y, color, buf);
+}
+
+void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...) {
+    char buf[33];
+    va_list val;
+    va_start(val, format);
+    int len = npf_vsnprintf(buf, sizeof(buf), format, val);
+    va_end(val);
+    ui_puts(alt_screen, x + 1 - len, y, color, buf);
 }
 
 // Tabs
@@ -252,21 +259,37 @@ void ui_clear_work_indicator(void) {
 
 // Menu system
 
-typedef struct {
-    uint8_t *list;
-    ui_menu_draw_line_func draw_line_func;
-    int height;
-    int pos;
-    int y;
-    int y_max;
-} ui_menu_state_t;
-
 static int ui_menu_len(uint8_t *menu_list) {
     int i = 0;
     while (*(menu_list++) != MENU_ENTRY_END) {
         i++;
     }
     return i;
+}
+
+static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color) {
+    char buf[31];
+    char buf_right[31];
+    buf[0] = 0; buf_right[0] = 0;
+
+    menu->build_line_func(menu->list[pos], buf, 30, buf_right, 30);
+    if (buf[0] != 0) {
+        ui_puts(false, 1, pos, color, buf);
+    }
+    if (buf_right[0] != 0) {
+        ui_puts(false, 27 - strlen(buf_right), pos, color, buf_right);
+    }
+}
+
+static void ui_menu_redraw(ui_menu_state_t *menu) {
+    if (menu->height > 0) {
+        for (uint8_t i = 0; i < 16; i++) {
+            if (i >= menu->height) break;
+            ui_menu_draw_line(menu, menu->y + i, 0);
+        }
+        ui_fill_line(menu->pos, 1);
+        ui_menu_draw_line(menu, menu->pos, 1);
+    }
 }
 
 static void ui_menu_move(ui_menu_state_t *menu, int8_t delta) {
@@ -277,52 +300,84 @@ static void ui_menu_move(ui_menu_state_t *menu, int8_t delta) {
 
     // draw lines
     ui_fill_line(menu->pos, 0);
-    menu->draw_line_func(menu->list[menu->pos], menu->pos, 0);
+    ui_menu_draw_line(menu, menu->pos, 0);
     menu->pos = new_pos;
     ui_fill_line(menu->pos, 1);
-    menu->draw_line_func(menu->list[menu->pos], menu->pos, 1);
+    ui_menu_draw_line(menu, menu->pos, 1);
 
     // adjust scroll
     int new_y = menu->pos - 8;
     if (new_y < 0) new_y = 0;
     else if (new_y >= menu->y_max) new_y = menu->y_max;
-    ui_scroll(new_y - menu->y);
-    menu->y = new_y;
+    int scroll_delta = new_y - menu->y;
+    if (scroll_delta != 0) {
+        ui_scroll(scroll_delta);
+        menu->y = new_y;
+
+        // TODO: optimize
+        ui_menu_redraw(menu);
+    }
 }
 
-uint8_t ui_menu_select(uint8_t *menu_list, ui_menu_draw_line_func draw_line_func) {
-    ui_clear_work_indicator();
+void ui_menu_init(ui_menu_state_t *menu) {
+    menu->height = ui_menu_len(menu->list);
+    menu->pos = 0;
+    menu->y = 0;
+    menu->y_max = menu->height - 16;
+    if (menu->y_max > menu->height) menu->y_max = 0;
+}
 
-    ui_menu_state_t menu;
-    menu.list = menu_list;
-    menu.draw_line_func = draw_line_func;
-    menu.height = ui_menu_len(menu_list);
-    menu.pos = 0;
-    menu.y = 0;
-    menu.y_max = menu.height - 16;
-    if (menu.y_max < 0) menu.y_max = 0;
- 
-    if (menu.height > 0) {
-        for (uint8_t i = 0; i < 16; i++) {
-            if (i >= menu.height) break;
-            draw_line_func(menu_list[i], i, 0);
-        }
-        ui_fill_line(0, 1);
-        draw_line_func(menu_list[0], 0, 1);
-    }
+uint16_t ui_menu_select(ui_menu_state_t *menu) {
+    ui_clear_work_indicator();
+    ui_menu_redraw(menu);
 
     while (ui_poll_events()) {
         if (input_pressed & KEY_UP) {
-            ui_menu_move(&menu, -1);
+            ui_menu_move(menu, -1);
         }
         if (input_pressed & KEY_DOWN) {
-            ui_menu_move(&menu, 1);
+            ui_menu_move(menu, 1);
         }
         wait_for_vblank();
+        uint8_t curr_entry = menu->list[menu->pos];
+        if (menu->flags & MENU_SEND_LEFT_RIGHT) {
+            if (input_pressed & KEY_LEFT) {
+                return curr_entry | MENU_ACTION_LEFT;
+            }
+            if (input_pressed & KEY_RIGHT) {
+                return curr_entry | MENU_ACTION_RIGHT;
+            }
+        }
+        if (menu->flags & MENU_B_AS_BACK) {
+            if (input_pressed & KEY_B) {
+                return MENU_ENTRY_END;
+            }
+        }
         if (input_pressed & KEY_A) {
-            return menu_list[menu.pos];
+            return curr_entry;
         }
     }
 
     return MENU_ENTRY_END;
+}
+
+// Progress bar
+
+void ui_pbar_init(ui_pbar_state_t *state) {
+    state->step = 0;
+}
+
+// TODO: Optimize (draw only changed steps)
+void ui_pbar_draw(ui_pbar_state_t *state) {
+    uint16_t step_count = state->width * 8;
+    uint16_t step_current = (((uint32_t) state->step) * step_count) / state->step_max;
+    uint8_t i = 0;
+    uint8_t x = state->x;
+    for (i = 8; i <= step_current; i += 8) {
+        ui_putc(false, x++, state->y, 219, UI_PAL_PBAR);
+    }
+    step_current &= 7;
+    if (step_current > 0) {
+        ui_putc(false, x, state->y, step_current + 255, UI_PAL_PBAR);
+    }
 }

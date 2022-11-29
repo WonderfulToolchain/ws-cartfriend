@@ -15,11 +15,11 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
+#include <string.h>
 #include <ws.h>
 #include "driver.h"
+#include "settings.h"
 #include "util.h"
-#include "wonderful-asm-common.h"
-#include "ws/hardware.h"
 
 static void clear_registers(void) {
     // wait for vblank, disable display, reset some registers
@@ -33,12 +33,17 @@ static void clear_registers(void) {
     outportb(IO_SCR1_SCRL_Y, 0);
     outportb(IO_SCR2_SCRL_X, 0);
     outportb(IO_SCR2_SCRL_Y, 0);
-    outportb(IO_SCR2_SCRL_Y, 0);
     outportb(IO_HWINT_VECTOR, 0);
     outportb(IO_HWINT_ENABLE, 0);
+
+    if (ws_system_color_active()) {
+        memset(MEM_COLOR_PALETTE(0), 0, 0x200);
+    }
 }
 
 void launch_slot(uint16_t slot, uint16_t bank) {
+    settings_save();
+
     driver_unlock();
     clear_registers();
     driver_launch_slot(0, slot, bank);
@@ -47,6 +52,8 @@ void launch_slot(uint16_t slot, uint16_t bank) {
 extern void launch_sram_asm(void);
 
 void launch_sram(void) {
+    settings_save();
+
     clear_registers();
     launch_sram_asm();
 }

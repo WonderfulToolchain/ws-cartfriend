@@ -46,14 +46,11 @@ extern uint8_t fm_initial_slot[7];
 void ui_about(void) {
     ui_puts_centered(false, 2, 0, lang_keys[LK_NAME]);
     // ui_puts_centered(false, 3, lang_keys[LK_RELEASE_DATE], 0);
-    ui_printf_centered(false, 3, 0, lang_keys[LK_UI_LOADED_FROM],
+    /* ui_printf_centered(false, 3, 0, lang_keys[LK_UI_LOADED_FROM],
         (int) fm_initial_slot[0],
         (int) fm_initial_slot[1],
         (int) fm_initial_slot[2],
-        (int) fm_initial_slot[3],
-        (int) fm_initial_slot[4],
-        (int) fm_initial_slot[5],
-        (int) fm_initial_slot[6]);
+        (int) fm_initial_slot[3]); */
     ui_puts_centered(false, 12, 0, lang_keys[LK_UI_ABOUT_URL_LINE1]);
     ui_puts_centered(false, 13, 0, lang_keys[LK_UI_ABOUT_URL_LINE2]);
 
