@@ -108,6 +108,10 @@ void ui_browse(void) {
             sram_switch_to_slot(sram_slot);
         }
 
+        input_wait_clear();
+		wait_for_vblank();
+		wait_for_vblank();
+
         launch_slot(result, 0xFF);
     }
 }
