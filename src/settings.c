@@ -109,7 +109,7 @@ void settings_save(void) {
 
     ui_step_work_indicator();
 
-    if (settings_slot == MAX_SETTINGS_SLOT) {
+    if (settings_slot >= MAX_SETTINGS_SLOT) {
         driver_erase_bank(0, driver_get_launch_slot(), SETTINGS_BANK);
         settings_slot = 0;
     } else {

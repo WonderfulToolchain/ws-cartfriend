@@ -22,6 +22,7 @@
 #include <ws.h>
 #include "config.h"
 #include "driver.h"
+#include "error.h"
 #include "lang.h"
 #include "settings.h"
 #include "sram.h"
@@ -30,7 +31,11 @@
 #include "ws/cartridge.h"
 
 static uint8_t sram_get_slot(uint8_t sram_slot) {
-    return 0x80 | (sram_slot << 3);
+    uint8_t slot = 0x80 | (sram_slot << 3);
+    if (slot >= 0xF8) {
+        error_critical(ERROR_CODE_SRAM_SLOT_OVERFLOW_UNKNOWN, sram_slot);
+    }
+    return slot;
 }
 
 static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
@@ -134,7 +139,9 @@ void sram_erase(uint8_t sram_slot) {
             ui_step_work_indicator();
 
             uint8_t rom_slot = sram_get_slot(i >> 3);
-            driver_erase_bank(0, driver_slot, rom_slot + (i & 7));
+            if ((rom_slot | 0x80) < 0xF8) {
+                driver_erase_bank(0, driver_slot, rom_slot + (i & 7));
+            }
         }
 
         driver_lock();
@@ -152,7 +159,9 @@ void sram_erase(uint8_t sram_slot) {
             ui_pbar_draw(&pbar);
             ui_step_work_indicator();
 
-            driver_erase_bank(0, driver_slot, rom_slot + i);
+            if ((rom_slot | 0x80) < 0xF8) {
+                driver_erase_bank(0, driver_slot, rom_slot + i);
+            }
         }
 
         driver_lock();
@@ -173,14 +182,18 @@ void sram_switch_to_slot(uint8_t sram_slot) {
 
     bool unlocked = false;
 
-    if (settings_local.active_sram_slot != SRAM_SLOT_NONE) {
+    if (sram_slot >= SRAM_SLOTS && sram_slot != SRAM_SLOT_NONE) {
+        error_critical(ERROR_CODE_SRAM_SLOT_OVERFLOW_SWITCH, sram_slot);
+    }
+
+    if (settings_local.active_sram_slot < SRAM_SLOTS) {
         if (!unlocked) { driver_unlock(); unlocked = true; }
         sram_backup_restore_slot(settings_local.active_sram_slot, false);
         settings_local.active_sram_slot = SRAM_SLOT_NONE;
         settings_mark_changed();
     }
 
-    if (sram_slot != SRAM_SLOT_NONE) {
+    if (sram_slot < SRAM_SLOTS) {
         if (!unlocked) { driver_unlock(); unlocked = true; }
         sram_backup_restore_slot(sram_slot, true);
         settings_local.active_sram_slot = sram_slot;
