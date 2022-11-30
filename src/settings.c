@@ -37,8 +37,7 @@ const char __far settings_magic[4] = {'w', 'f', 'C', 'F'};
 void settings_reset(void) {
     memset(((uint8_t*) &settings_local) + sizeof(settings_magic), 0, sizeof(settings_local) - sizeof(settings_magic));
     memcpy(settings_local.magic, settings_magic, sizeof(settings_magic));
-    settings_local.ver_major = SETTINGS_VERSION_MAJOR;
-    settings_local.ver_minor = SETTINGS_VERSION_MINOR;
+    settings_local.version = SETTINGS_VERSION;
 
     // game/SRAM slots
     uint8_t sram_slot = 0;
@@ -56,6 +55,7 @@ void settings_reset(void) {
         settings_local.sram_slot_mapping[sram_slot++] = 0xFF;
     }
     settings_local.active_sram_slot = SRAM_SLOT_FIRST_BOOT;
+    settings_local.color_theme = 0;
 
     settings_changed = true;
     settings_slot = MAX_SETTINGS_SLOT;
@@ -89,6 +89,13 @@ void settings_load(void) {
 
     if (!settings_found) {
         settings_reset();
+    } else {
+        // version migration
+        if (settings_local.version < 1) {
+            settings_local.color_theme = 0;
+        }
+
+        settings_local.version = SETTINGS_VERSION;
     }
 }
 

@@ -46,7 +46,7 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
     ui_pbar_init(&pbar);
 
     ui_reset_main_screen();
-    ui_puts_centered(false, 2, 0, lang_keys[is_restore ? LK_DIALOG_RESTORE_SRAM : LK_DIALOG_BACKUP_SRAM]);
+    ui_puts_centered(false, 2, 0, lang_keys[is_restore ? LK_UI_MSG_RESTORE_SRAM : LK_UI_MSG_BACKUP_SRAM]);
 
     if (!is_restore) {
         // for backup, erase slots first
@@ -97,7 +97,7 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
 
 void sram_erase(uint8_t sram_slot) {
     ui_reset_main_screen();
-    ui_puts_centered(false, 2, 0, lang_keys[LK_DIALOG_ERASE_SRAM]);
+    ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_ERASE_SRAM]);
 
     ui_pbar_state_t pbar = {
         .x = 1,

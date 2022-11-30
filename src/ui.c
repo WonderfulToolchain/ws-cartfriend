@@ -21,17 +21,87 @@
 #include "driver.h"
 #include "input.h"
 #include "lang.h"
+#include "settings.h"
 #include "ui.h"
 #include "../res/font_default.h"
 #include "nanoprintf.h"
 #include "util.h"
 #include "ws/display.h"
+#include "ws/system.h"
 
 #define SCREEN1 ((uint16_t*) 0x1800)
 #define SCREEN2 ((uint16_t*) 0x3800)
 
 static uint8_t scroll_y;
 const char __far* const __far* lang_keys;
+
+static const uint16_t __far theme_colorways[UI_THEME_COUNT][6] = {
+    { // Light
+        RGB(0, 0, 0),
+        RGB(4, 4, 4),
+        RGB(6, 6, 6),
+        RGB(8, 8, 8),
+        RGB(11, 11, 11),
+        RGB(15, 15, 15)
+    },
+    { // Dark
+        RGB(15, 15, 15),
+        RGB(11, 11, 11),
+        RGB(8, 8, 8),
+        RGB(6, 6, 6),
+        RGB(4, 4, 4),
+        RGB(0, 0, 0)
+    }
+};
+
+static bool ui_dialog_open;
+
+void ui_update_theme(uint8_t current_theme) {
+    wait_for_vblank();
+    if (ws_system_color_active()) {
+        const uint16_t __far* colorway = theme_colorways[current_theme & 7];
+        MEM_COLOR_PALETTE(0)[0] = colorway[ui_dialog_open ? 3 : 5];
+        MEM_COLOR_PALETTE(0)[1] = colorway[ui_dialog_open ? 2 : 0];
+        MEM_COLOR_PALETTE(1)[0] = colorway[ui_dialog_open ? 2 : 0];
+        MEM_COLOR_PALETTE(1)[1] = colorway[ui_dialog_open ? 3 : 5];
+        MEM_COLOR_PALETTE(2)[0] = colorway[4];
+        MEM_COLOR_PALETTE(2)[1] = colorway[1];
+        MEM_COLOR_PALETTE(3)[0] = colorway[1];
+        MEM_COLOR_PALETTE(3)[1] = colorway[4];
+        MEM_COLOR_PALETTE(8)[0] = colorway[5];
+        MEM_COLOR_PALETTE(8)[1] = colorway[0];
+        MEM_COLOR_PALETTE(9)[0] = colorway[0];
+        MEM_COLOR_PALETTE(9)[1] = colorway[5];
+        MEM_COLOR_PALETTE(10)[0] = colorway[5];
+        MEM_COLOR_PALETTE(10)[1] = RGB(15, 0, 0);
+    } else {
+        if (current_theme & 0x80) {
+            // dark mode
+            ws_display_set_shade_lut(SHADE_LUT(15, 13, 11, 8, 6, 4, 2, 0));
+        } else {
+            // light mode
+            ws_display_set_shade_lut(SHADE_LUT(0, 2, 4, 6, 8, 11, 13, 15));
+        }
+        if (ui_dialog_open) {
+            outportw(0x20, 4 << 4 | 3);
+            outportw(0x22, 3 << 4 | 4);
+        } else {
+            outportw(0x20, 7 << 4);
+            outportw(0x22, 7);
+        }
+        outportw(0x24, 5 << 4 | 2);
+        outportw(0x26, 2 << 4 | 5);
+        outportw(0x30, 7 << 4);
+        outportw(0x32, 7);
+        outportw(0x34, 4 << 4);
+    }
+}
+
+void ui_reset_alt_screen(void) {
+    for (uint16_t i = 0; i < 32*16; i++) {
+        SCREEN2[i + 32] = SCR_ENTRY_PALETTE(7);
+    }
+}
 
 void ui_init(void) {
     lang_keys = lang_keys_en;
@@ -44,13 +114,11 @@ void ui_init(void) {
     outportb(IO_SCR2_SCRL_Y, 0);
 
     // set palettes (mono)
-    ws_display_set_shade_lut(SHADE_LUT(0, 2, 4, 6, 8, 10, 12, 15));
-    outportw(0x20, 7 << 4);
-    outportw(0x22, 7);
-    outportw(0x24, 5 << 4 | 2);
-    outportw(0x26, 2 << 4 | 5);
-    outportw(0x30, 7 << 4);
-    outportw(0x32, 4 << 4);
+    if (ws_system_is_color()) {
+        ws_mode_set(WS_MODE_COLOR);
+    }
+    ui_dialog_open = false;
+    ui_update_theme(0);
 
     // install font @ 0x2000
     const uint8_t __far *font_src = _font_default_bin;
@@ -60,10 +128,8 @@ void ui_init(void) {
     }
 
     ui_reset_main_screen();
+    ui_reset_alt_screen();
 
-    for (uint16_t i = 0; i < 32*16; i++) {
-        SCREEN2[i + 32] = SCR_ENTRY_PALETTE(7);
-    }
     for (uint16_t i = 0; i < 28; i++) {
         SCREEN2[i] = SCR_ENTRY_PALETTE(2);
         SCREEN2[i + (17 << 5)] = SCR_ENTRY_PALETTE(2);
@@ -268,6 +334,11 @@ static int ui_menu_len(uint8_t *menu_list) {
 }
 
 static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color) {
+    if (menu->list[pos] == MENU_ENTRY_DIVIDER) {
+        ws_screen_fill(SCREEN1, 196, 0, pos, 28, 1);
+        return;
+    }
+
     char buf[31];
     char buf_right[31];
     buf[0] = 0; buf_right[0] = 0;
@@ -293,9 +364,15 @@ static void ui_menu_redraw(ui_menu_state_t *menu) {
 }
 
 static void ui_menu_move(ui_menu_state_t *menu, int8_t delta) {
-    int new_pos = menu->pos + delta;
-    if (new_pos < 0) new_pos = 0;
-    else if (new_pos >= menu->height) new_pos = menu->height - 1;
+    int last_pos;
+    int new_pos = menu->pos;
+    do {
+        last_pos = new_pos;
+        new_pos = new_pos + delta;
+        if (new_pos < 0) new_pos = 0;
+        else if (new_pos >= menu->height) new_pos = menu->height - 1;
+    } while (last_pos != new_pos && (menu->list[new_pos] == MENU_ENTRY_DIVIDER));
+
     if (new_pos == menu->pos) return;
 
     // draw lines
@@ -367,7 +444,6 @@ void ui_pbar_init(ui_pbar_state_t *state) {
     state->step = 0;
 }
 
-// TODO: Optimize (draw only changed steps)
 void ui_pbar_draw(ui_pbar_state_t *state) {
     uint16_t step_count = state->width * 8;
     uint16_t step_current = (((uint32_t) state->step) * step_count) / state->step_max;
@@ -378,6 +454,105 @@ void ui_pbar_draw(ui_pbar_state_t *state) {
     }
     step_current &= 7;
     if (step_current > 0) {
-        ui_putc(false, x, state->y, step_current + 255, UI_PAL_PBAR);
+        ui_putc(false, x, state->y, step_current + UI_GLYPH_HORIZONTAL_PBAR, UI_PAL_PBAR);
     }
+}
+
+// Dialog
+
+static uint8_t sep_count_lines(const char __far* s, uint8_t *max_width) {
+    uint8_t line_width = 0;
+    uint8_t line_count = 1;
+    while (*s != '\0') {
+        if (*s == '|') {
+            if (line_width > *max_width) {
+                *max_width = line_width;
+            }
+            line_width = 0;
+            line_count++;
+        } else {
+            line_width++;
+        }
+        s++;
+    }
+    if (line_width > *max_width) {
+        *max_width = line_width;
+    }
+    return line_count;
+}
+
+static void sep_draw(const char __far* s, uint8_t x, uint8_t y, uint8_t highlight_line, bool left_aligned) {
+    char buf[29];
+    highlight_line += y;
+
+    uint8_t i = 0;
+    while (*s != '\0') {
+        if (*s == '|') {
+            buf[i] = 0;
+            if (left_aligned) {
+                ui_puts(true, x, y, y == highlight_line ? 9 : 8, buf);
+            } else {
+                ui_puts_centered(true, y, y == highlight_line ? 9 : 8, buf);
+            }
+            i = 0;
+            y++;
+        } else {
+            buf[i++] = *s;
+        }
+        s++;
+    }
+
+    buf[i] = 0;
+    if (left_aligned) {
+        ui_puts(true, x, y, y == highlight_line ? 9 : 8, buf);
+    } else {
+        ui_puts_centered(true, y, y == highlight_line ? 9 : 8, buf);
+    }
+}
+
+uint8_t ui_dialog_run(uint16_t flags, uint8_t initial_option, uint16_t lk_question, uint16_t lk_options) {
+    wait_for_vblank();
+    ui_dialog_open = true;
+    ui_update_theme(settings_local.color_theme);
+
+    uint8_t max_line_width = 0;
+    uint8_t line_count = sep_count_lines(lang_keys[lk_question], &max_line_width);
+    uint8_t option_count = sep_count_lines(lang_keys[lk_options], &max_line_width);
+
+    uint8_t width = ((max_line_width + 2) + 1) & 0xFE;
+    uint8_t height = ((line_count + option_count + 3) + 1) & 0xFE;
+    uint8_t x = 14 - ((width + 1) >> 1);
+    uint8_t y = 9 - ((height + 1) >> 1);
+    ws_screen_fill(SCREEN2, SCR_ENTRY_PALETTE(UI_PAL_DIALOG), x, y, width, height);
+    uint8_t selected_option = initial_option;
+
+    // draw text
+    sep_draw(lang_keys[lk_question], x + 1, y + 1, 0xFF, true);
+    while (true) {
+        sep_draw(lang_keys[lk_options], x + 1, y + height - option_count - 1, selected_option, false);
+
+        wait_for_vblank();
+        input_update();
+        if (input_pressed & KEY_UP) {
+            if (selected_option > 0) {
+                selected_option--;
+            }
+        } else if (input_pressed & KEY_DOWN) {
+            if (selected_option < (option_count - 1)) {
+                selected_option++;
+            }
+        } else if (input_pressed & KEY_A) {
+            break;
+        } else if (input_pressed & KEY_B) {
+            selected_option = 0xFF;
+            break;
+        }
+    }
+
+    wait_for_vblank();
+    ui_dialog_open = false;
+    ui_update_theme(settings_local.color_theme);
+    ui_reset_alt_screen();
+
+    return selected_option;
 }

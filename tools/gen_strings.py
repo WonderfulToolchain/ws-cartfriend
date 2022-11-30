@@ -47,7 +47,7 @@ with (
 	print("// Auto-generated file. Please do not edit directly.\n", file = fp_h)
 	print(f"#ifndef {hdr_define}\n#define {hdr_define}\n", file = fp_h)
 
-	for k, v in property_keys.items():
+	for k, v in sorted(property_keys.items(), key=lambda x: x[1]):
 		print(f"#define LK_{k} {v}", file = fp_h)
 	print(f"#define LK_TOTAL {property_idx}\n", file = fp_h)
 	for k in property_langs.keys():
@@ -72,7 +72,7 @@ with (
 			if local_lang_key not in properties[k]:
 				local_lang_key = "en"
 			sv = properties[k][local_lang_key]
-			print(f"\tlk_entry_{property_strings[sv]},", file = fp_c)
+			print(f"\tlk_entry_{property_strings[sv]}, // {k}", file = fp_c)
 		print("};", file = fp_c)
 
 	print("\n#endif", file = fp_h);

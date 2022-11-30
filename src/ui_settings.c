@@ -25,26 +25,44 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
+#include "ws/system.h"
 
 #define MENU_OPT_SAVEMAP 0
 #define MENU_OPT_SAVE 1
 #define MENU_OPT_ERASE_SRAM 2
 #define MENU_OPT_FORCECARTSRAM 3
+#define MENU_OPT_THEME 4
 
 static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_SAVEMAP,
     LK_UI_SETTINGS_SAVE,
     LK_UI_SETTINGS_ERASE_SRAM,
     LK_UI_SETTINGS_FORCECARTSRAM,
+    LK_UI_SETTINGS_THEME
 };
+
+static uint16_t __far ui_theme_color_lks[] = {
+    LK_THEME_C0,
+    LK_THEME_C1
+};
+
 static void ui_opt_menu_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
-    bool marked = false;
     if (entry_id == MENU_OPT_SAVE) {
-        marked = settings_changed;
-    } else if (entry_id == MENU_OPT_FORCECARTSRAM) {
-        marked = settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT;
+        npf_snprintf(buf, buf_len, lang_keys[settings_changed ? LK_MENU_MARKED : LK_MENU_UNMARKED], lang_keys[ui_opt_lks[entry_id]]);
+    } else {
+        strncpy(buf, lang_keys[ui_opt_lks[entry_id]], buf_len);
+        if (entry_id == MENU_OPT_FORCECARTSRAM) {
+            bool yes = settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT;
+            strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
+        }
+        if (entry_id == MENU_OPT_THEME) {
+            if (ws_system_color_active()) {
+                strncpy(buf_right, lang_keys[ui_theme_color_lks[settings_local.color_theme & 0x7F]], buf_right_len);
+            } else {
+                strncpy(buf_right, lang_keys[(settings_local.color_theme & 0x80) ? LK_THEME_M1 : LK_THEME_M0], buf_right_len);
+            }
+        }
     }
-    npf_snprintf(buf, buf_len, lang_keys[marked ? LK_MENU_MARKED : LK_MENU_UNMARKED], lang_keys[ui_opt_lks[entry_id]]);
 }
 
 static void ui_opt_menu_savemap_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
@@ -62,16 +80,11 @@ static void ui_opt_menu_savemap_build_line(uint8_t entry_id, char *buf, int buf_
 static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < SRAM_SLOTS) {
         npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_ERASE_SRAM_ACTIVE : LK_UI_ERASE_SRAM], entry_id + 1);
-    } else if (entry_id == 0xFE) {
+    } else if (entry_id == 0xEF) {
         strncpy(buf, lang_keys[LK_UI_ERASE_SRAM_CARTRIDGE], buf_len);
-    } else if (entry_id == SRAM_SLOT_ALL) {
+    } else if (entry_id == 0xEE) {
         strncpy(buf, lang_keys[LK_UI_ERASE_SRAM_ALL], buf_len);
     }
-}
-
-
-static void ui_opt_menu_settings_confirm_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
-    strncpy(buf, lang_keys[entry_id ? LK_UI_CONFIRM_YES : LK_UI_CONFIRM_NO], buf_len);
 }
 
 static uint8_t ui_savemap_next(uint8_t slot) {
@@ -99,8 +112,10 @@ void ui_settings(void) {
     if (driver_supports_slots()) {
         menu_list[i++] = MENU_OPT_SAVEMAP;
     }
+    menu_list[i++] = MENU_OPT_THEME;
     menu_list[i++] = MENU_OPT_FORCECARTSRAM;
     menu_list[i++] = MENU_OPT_SAVE;
+    menu_list[i++] = MENU_ENTRY_DIVIDER;
     menu_list[i++] = MENU_OPT_ERASE_SRAM;
     menu_list[i++] = MENU_ENTRY_END;
 
@@ -111,6 +126,8 @@ void ui_settings(void) {
     };
     ui_menu_init(&menu);
     
+Reselect:
+    ;
     uint16_t result = ui_menu_select(&menu);
     if (result == MENU_OPT_SAVEMAP) {
         i = 0;
@@ -136,21 +153,21 @@ void ui_settings(void) {
                 settings_mark_changed();
             }
         }
+    } else if (result == MENU_OPT_THEME) {
+        if (ws_system_color_active()) {
+            settings_local.color_theme = (settings_local.color_theme & 0x80)
+                | (((settings_local.color_theme & 0x7F) + 1) % UI_THEME_COUNT);
+        } else {
+            settings_local.color_theme ^= 0x80;
+        }
+        settings_mark_changed();
+        ui_update_theme(settings_local.color_theme);
+        goto Reselect;
     } else if (result == MENU_OPT_SAVE) {
         settings_save();
     } else if (result == MENU_OPT_FORCECARTSRAM) {
         if (settings_local.active_sram_slot != 0xFE) {
-            menu_list[0] = 0;
-            menu_list[1] = 1;
-            menu_list[2] = MENU_ENTRY_END;
-
-            menu.build_line_func = ui_opt_menu_settings_confirm_build_line;
-            menu.flags = MENU_B_AS_BACK;
-            ui_menu_init(&menu);
-            ui_reset_main_screen();
-
-            result = ui_menu_select(&menu);
-            if (result == 1) {
+            if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
                 settings_local.active_sram_slot = 0xFE;
                 settings_mark_changed();
             }
@@ -160,8 +177,8 @@ void ui_settings(void) {
         for (uint8_t j = 0; j < SRAM_SLOTS; j++) {
             menu_list[i++] = j;
         }
-        menu_list[i++] = 0xFE;
-        menu_list[i++] = SRAM_SLOT_ALL;
+        menu_list[i++] = 0xEF;
+        menu_list[i++] = 0xEE;
         menu_list[i] = MENU_ENTRY_END;
 
         menu.build_line_func = ui_opt_menu_erase_sram_build_line;
@@ -175,25 +192,15 @@ void ui_settings(void) {
 
         if (result < SRAM_SLOTS) {
             slot_to_erase = result;
-        } else if (result == 0xFE) {
+        } else if (result == 0xEF) {
             slot_to_erase = 0xFF;
-        } else if (result == SRAM_SLOT_ALL) {
+        } else if (result == 0xEE) {
             slot_to_erase = SRAM_SLOT_ALL;
         } else {
             return;
         }
 
-        menu_list[0] = 0;
-        menu_list[1] = 1;
-        menu_list[2] = MENU_ENTRY_END;
-
-        menu.build_line_func = ui_opt_menu_settings_confirm_build_line;
-        menu.flags = MENU_B_AS_BACK;
-        ui_menu_init(&menu);
-        ui_reset_main_screen();
-
-        result = ui_menu_select(&menu);
-        if (result == 1) {
+        if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
             sram_erase(slot_to_erase);
         }
     }

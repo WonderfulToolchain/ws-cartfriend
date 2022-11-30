@@ -38,6 +38,7 @@ static void clear_registers(void) {
 
     if (ws_system_color_active()) {
         memset(MEM_COLOR_PALETTE(0), 0, 0x200);
+        ws_mode_set(WS_MODE_MONO);
     }
 }
 

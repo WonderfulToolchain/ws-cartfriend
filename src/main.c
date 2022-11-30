@@ -20,6 +20,7 @@
 #include "driver.h"
 #include "input.h"
 #include "settings.h"
+#include "sram.h"
 #include "ui.h"
 #include "util.h"
 
@@ -42,10 +43,18 @@ void main(void) {
 	driver_init();
 
 	settings_load();
+	ui_update_theme(settings_local.color_theme);
 	input_wait_clear(); // wait for input to calm down
 
 	ui_set_current_tab(UI_TAB_BROWSE);
 	ui_show();
+
+	if (settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
+		ui_reset_main_screen();
+		if (ui_dialog_run(0, 0, LK_DIALOG_FIRST_BOOT_ERASE, LK_DIALOG_YES_NO) == 0) {
+			sram_erase(SRAM_SLOT_ALL);
+		}
+	}
 
 	while (true) {
 		ui_reset_main_screen();

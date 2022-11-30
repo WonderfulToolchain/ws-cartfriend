@@ -20,12 +20,13 @@
 #include <stdint.h>
 #include "../res/lang.h"
 
-#define UI_PAL_MAIN   0
-#define UI_PAL_MAINI  1
-#define UI_PAL_BAR    2
-#define UI_PAL_BARI   3
-#define UI_PAL_DIALOG 8
-#define UI_PAL_PBAR   9
+#define UI_PAL_MAIN    0
+#define UI_PAL_MAINI   1
+#define UI_PAL_BAR     2
+#define UI_PAL_BARI    3
+#define UI_PAL_DIALOG  8
+#define UI_PAL_DIALOGI 9
+#define UI_PAL_PBAR    10
 
 extern const char __far* const __far* lang_keys;
 
@@ -42,9 +43,14 @@ __attribute__((format(printf, 5, 6))) void ui_printf(bool alt_screen, uint8_t x,
 __attribute__((format(printf, 4, 5))) void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...);
 __attribute__((format(printf, 5, 6))) void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
 
+#define UI_THEME_COUNT 2
+void ui_update_theme(uint8_t current_theme);
+
 #define UI_GLYPH_ARROW_RIGHT 16
 #define UI_GLYPH_ARROW_LEFT 17
-#define UI_GLYPH_TRIANGLE_UR 270
+#define UI_GLYPH_TRIANGLE_UR 169
+#define UI_GLYPH_TRIANGLE_UL 170
+#define UI_GLYPH_HORIZONTAL_PBAR 183
 
 // Tabs
 
@@ -65,6 +71,7 @@ void ui_clear_work_indicator(void);
 
 // Menu system
 
+#define MENU_ENTRY_DIVIDER 254
 #define MENU_ENTRY_END 255
 
 typedef void (*ui_menu_build_line_func)(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len);
@@ -90,7 +97,8 @@ typedef struct {
 void ui_menu_init(ui_menu_state_t *menu);
 uint16_t ui_menu_select(ui_menu_state_t *menu);
 
-// Progress bar system
+// Progress bars
+
 typedef struct {
     uint16_t step, step_max;
     uint8_t x, y, width;
@@ -98,6 +106,10 @@ typedef struct {
 
 void ui_pbar_init(ui_pbar_state_t *state);
 void ui_pbar_draw(ui_pbar_state_t *state);
+
+// Dialogs
+
+uint8_t ui_dialog_run(uint16_t flags, uint8_t initial_option, uint16_t lk_question, uint16_t lk_options);
 
 // Tab implementations
 
