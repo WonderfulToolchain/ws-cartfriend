@@ -149,7 +149,7 @@ void ui_hide(void) {
 
 void ui_reset_main_screen(void) {
     scroll_y = 0;
-    outportb(IO_SCR1_SCRL_X, 0);
+    outportb(IO_SCR1_SCRL_X, 4);
     outportb(IO_SCR1_SCRL_Y, 248);
     memset(SCREEN1, 0, 0x800);
 }
@@ -168,7 +168,7 @@ void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color)
 void ui_fill_line(uint8_t y, uint8_t color) {
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = SCREEN1 + (y << 5);
-    for (uint8_t i = 0; i < 28; i++) {
+    for (uint8_t i = 0; i < 29; i++) {
         *(screen++) = prefix;
     }
 }
@@ -178,12 +178,12 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
     while (*buf != '\0') {
         ws_screen_put(screen, prefix | ((uint8_t) *(buf++)), x++, y);
-        if (x == 28) return;
+        if (x == 29) return;
     }
 }
 
 void ui_puts_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* buf) {
-    uint8_t x = 14 - (strlen(buf) >> 1);
+    uint8_t x = ((alt_screen ? 28 : 29) - strlen(buf)) >> 1;
     ui_puts(alt_screen, x, y, color, buf);
 }
 
@@ -202,7 +202,7 @@ void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __
     va_start(val, format);
     npf_vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
-    uint8_t x = 14 - (strlen(buf) >> 1);
+    uint8_t x = ((alt_screen ? 28 : 29) - strlen(buf)) >> 1;
     ui_puts(alt_screen, x, y, color, buf);
 }
 
@@ -327,7 +327,7 @@ void ui_clear_work_indicator(void) {
 
 static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color) {
     if (menu->list[pos] == MENU_ENTRY_DIVIDER) {
-        ws_screen_fill(SCREEN1, 196, 0, pos, 28, 1);
+        ws_screen_fill(SCREEN1, 196, 0, pos, 29, 1);
         return;
     }
 
@@ -340,7 +340,7 @@ static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color)
         ui_puts(false, 1, pos, color, buf);
     }
     if (buf_right[0] != 0) {
-        ui_puts(false, 27 - strlen(buf_right), pos, color, buf_right);
+        ui_puts(false, 28 - strlen(buf_right), pos, color, buf_right);
     }
 }
 

@@ -46,7 +46,7 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
         .step_max = 2048,
         .x = 1,
         .y = 13,
-        .width = 26
+        .width = 27
     };
     ui_pbar_init(&pbar);
 
@@ -107,7 +107,7 @@ void sram_erase(uint8_t sram_slot) {
     ui_pbar_state_t pbar = {
         .x = 1,
         .y = 13,
-        .width = 26
+        .width = 27
     };
 
     if (sram_slot == settings_local.active_sram_slot || sram_slot == SRAM_SLOT_NONE) {
