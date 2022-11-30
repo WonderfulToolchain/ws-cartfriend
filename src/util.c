@@ -26,3 +26,19 @@ void wait_for_vblank(void) {
                 cpu_halt();
         }
 }
+
+int u8_arraylist_len(uint8_t *list) {
+    int i = 0;
+    while (*(list++) != 0xFF) {
+        i++;
+    }
+    return i;
+}
+
+int u16_arraylist_len(uint16_t *list) {
+    int i = 0;
+    while (*(list++) != 0xFFFF) {
+        i++;
+    }
+    return i;
+}

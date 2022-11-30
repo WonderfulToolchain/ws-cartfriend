@@ -32,13 +32,15 @@
 #define MENU_OPT_ERASE_SRAM 2
 #define MENU_OPT_FORCECARTSRAM 3
 #define MENU_OPT_THEME 4
+#define MENU_OPT_SLOTMAP 5
 
 static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_SAVEMAP,
     LK_UI_SETTINGS_SAVE,
     LK_UI_SETTINGS_ERASE_SRAM,
     LK_UI_SETTINGS_FORCECARTSRAM,
-    LK_UI_SETTINGS_THEME
+    LK_UI_SETTINGS_THEME,
+    LK_UI_SETTINGS_SLOTMAP
 };
 
 static uint16_t __far ui_theme_color_lks[] = {
@@ -62,6 +64,11 @@ static void ui_opt_menu_build_line(uint8_t entry_id, char *buf, int buf_len, cha
                 strncpy(buf_right, lang_keys[(settings_local.color_theme & 0x80) ? LK_THEME_M1 : LK_THEME_M0], buf_right_len);
             }
         }
+        if (entry_id == MENU_OPT_SLOTMAP || entry_id == MENU_OPT_SAVEMAP) {
+            buf_right[0] = '>';
+            buf_right[1] = '>';
+            buf_right[2] = 0;
+        }
     }
 }
 
@@ -77,6 +84,53 @@ static void ui_opt_menu_savemap_build_line(uint8_t entry_id, char *buf, int buf_
     }
 }
 
+static uint8_t ui_savemap_next(uint8_t slot) {
+    // 0xFF -> 0
+    for (uint8_t i = slot + 1; i < GAME_SLOTS; i++) {
+        if (settings_local.slot_type[i] == SLOT_TYPE_SOFT || settings_local.slot_type[i] == SLOT_TYPE_MULTILINEAR_SOFT) {
+            return i;
+        }
+    }
+    return 0xFF;
+}
+
+static uint8_t ui_savemap_prev(uint8_t slot) {
+    for (uint8_t i = slot == 0xFF ? GAME_SLOTS : (slot - 1); i >= 0; i--) {
+        if (settings_local.slot_type[i] == SLOT_TYPE_SOFT || settings_local.slot_type[i] == SLOT_TYPE_MULTILINEAR_SOFT) {
+            return i;
+        }
+    }
+    return 0xFF;
+}
+
+static void ui_opt_menu_slotmap_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
+    if (entry_id < GAME_SLOTS) {
+        npf_snprintf(buf, buf_len, lang_keys[LK_UI_SLOTMAP_SLOT], entry_id + 1);
+        uint8_t slot_type = settings_local.slot_type[entry_id];
+        if (slot_type == SLOT_TYPE_SOFT) {
+            strncpy(buf_right, lang_keys[LK_UI_SLOTMAP_SOFT], buf_right_len);
+        } else if (slot_type == SLOT_TYPE_LAUNCHER) {
+            strncpy(buf_right, lang_keys[LK_UI_SLOTMAP_LAUNCHER], buf_right_len);
+        } else if (slot_type == SLOT_TYPE_UNUSED) {
+            strncpy(buf_right, lang_keys[LK_UI_SLOTMAP_UNUSED], buf_right_len);
+        }
+    }
+}
+
+static const uint8_t __far slotmap_order[] = {
+    SLOT_TYPE_SOFT,
+    SLOT_TYPE_UNUSED
+};
+
+static uint8_t ui_slotmap_next(uint8_t slot, uint8_t delta) {
+    for (uint8_t i = 0; i < sizeof(slotmap_order); i++) {
+        if (slotmap_order[i] == slot) {
+            return slotmap_order[(i + delta) % sizeof(slotmap_order)];
+        }
+    }
+    return slot;
+}
+
 static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < SRAM_SLOTS) {
         npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_ERASE_SRAM_ACTIVE : LK_UI_ERASE_SRAM], entry_id + 1);
@@ -87,30 +141,12 @@ static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, char *buf, int b
     }
 }
 
-static uint8_t ui_savemap_next(uint8_t slot) {
-    // 0xFF -> 0
-    for (uint8_t i = slot + 1; i < GAME_SLOTS; i++) {
-        if (settings_local.slot_type[i] == SLOT_TYPE_GAME || settings_local.slot_type[i] == SLOT_TYPE_MULTI_LINEAR_GAME) {
-            return i;
-        }
-    }
-    return 0xFF;
-}
-
-static uint8_t ui_savemap_prev(uint8_t slot) {
-    for (uint8_t i = slot == 0xFF ? GAME_SLOTS : (slot - 1); i >= 0; i--) {
-        if (settings_local.slot_type[i] == SLOT_TYPE_GAME || settings_local.slot_type[i] == SLOT_TYPE_MULTI_LINEAR_GAME) {
-            return i;
-        }
-    }
-    return 0xFF;
-}
-
 void ui_settings(void) {
     uint8_t menu_list[32];
     uint8_t i = 0;
     if (driver_supports_slots()) {
         menu_list[i++] = MENU_OPT_SAVEMAP;
+        menu_list[i++] = MENU_OPT_SLOTMAP;
     }
     menu_list[i++] = MENU_OPT_THEME;
     menu_list[i++] = MENU_OPT_FORCECARTSRAM;
@@ -150,6 +186,30 @@ Reselect:
                 settings_mark_changed();
             } else {
                 settings_local.sram_slot_mapping[result & 0xFF] = ui_savemap_next(settings_local.sram_slot_mapping[result & 0xFF]);
+                settings_mark_changed();
+            }
+        }
+    } else if (result == MENU_OPT_SLOTMAP) {
+        i = 0;
+        for (uint8_t j = 0; j < GAME_SLOTS; j++) {
+            menu_list[i++] = j;
+        }
+        menu_list[i] = MENU_ENTRY_END;
+
+        menu.build_line_func = ui_opt_menu_slotmap_build_line;
+        menu.flags = MENU_SEND_LEFT_RIGHT | MENU_B_AS_BACK;
+        ui_menu_init(&menu);
+        ui_reset_main_screen();
+
+        while (true) {
+            result = ui_menu_select(&menu);
+            if (result == MENU_ENTRY_END) {
+                break;
+            } else if (result & MENU_ACTION_LEFT) {
+                settings_local.slot_type[result & 0xFF] = ui_slotmap_next(settings_local.slot_type[result & 0xFF], sizeof(slotmap_order) - 1);
+                settings_mark_changed();
+            } else {
+                settings_local.slot_type[result & 0xFF] = ui_slotmap_next(settings_local.slot_type[result & 0xFF], 1);
                 settings_mark_changed();
             }
         }

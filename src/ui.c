@@ -325,14 +325,6 @@ void ui_clear_work_indicator(void) {
 
 // Menu system
 
-static int ui_menu_len(uint8_t *menu_list) {
-    int i = 0;
-    while (*(menu_list++) != MENU_ENTRY_END) {
-        i++;
-    }
-    return i;
-}
-
 static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color) {
     if (menu->list[pos] == MENU_ENTRY_DIVIDER) {
         ws_screen_fill(SCREEN1, 196, 0, pos, 28, 1);
@@ -397,7 +389,7 @@ static void ui_menu_move(ui_menu_state_t *menu, int8_t delta) {
 }
 
 void ui_menu_init(ui_menu_state_t *menu) {
-    menu->height = ui_menu_len(menu->list);
+    menu->height = u8_arraylist_len(menu->list);
     menu->pos = 0;
     menu->y = 0;
     menu->y_max = menu->height - 16;

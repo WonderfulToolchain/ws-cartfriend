@@ -45,7 +45,7 @@ void settings_reset(void) {
         if (i == driver_get_launch_slot()) {
             settings_local.slot_type[i] = SLOT_TYPE_LAUNCHER;
         } else {
-            settings_local.slot_type[i] = SLOT_TYPE_GAME;
+            settings_local.slot_type[i] = SLOT_TYPE_SOFT;
             if (sram_slot < GAME_SLOTS) {
                 settings_local.sram_slot_mapping[sram_slot++] = i;
             }

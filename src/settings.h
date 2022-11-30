@@ -20,11 +20,11 @@
 #include <stdint.h>
 #include "config.h"
 
-#define SLOT_TYPE_GAME 0
+#define SLOT_TYPE_SOFT 0
 #define SLOT_TYPE_LAUNCHER 1
-#define SLOT_TYPE_MULTI_LINEAR_GAME 2 /* Tentative */
+#define SLOT_TYPE_MULTILINEAR_SOFT 2 /* Tentative */
 #define SLOT_TYPE_APPENDED_FILES 3 /* Tentative */
-#define SLOT_TYPE_UNUSED 4
+#define SLOT_TYPE_UNUSED 0xFF
 
 #define SETTINGS_VERSION 1
 

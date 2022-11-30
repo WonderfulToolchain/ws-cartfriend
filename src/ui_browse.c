@@ -38,8 +38,12 @@ static uint8_t iterate_carts(uint8_t *menu_list, uint8_t i) {
 
     ui_step_work_indicator();
     driver_unlock();
-    for (uint8_t slot = 0; slot <= 15; slot++) {
+    for (uint8_t slot = 0; slot < GAME_SLOTS; slot++) {
         ui_step_work_indicator();
+        if (settings_local.slot_type[slot] == SLOT_TYPE_UNUSED) {
+            continue;
+        }
+
         if (driver_get_launch_slot() == slot) {
             // if booted from RAM/SRAM, don't skip launch slot
             if (_CS >= 0x2000) {

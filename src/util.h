@@ -20,3 +20,6 @@
 #include <stdint.h>
 
 void wait_for_vblank(void);
+
+int u8_arraylist_len(uint8_t *list);
+int u16_arraylist_len(uint16_t *list);
