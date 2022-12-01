@@ -116,8 +116,6 @@ driver_launch_slot:
 
 	// move relocated driver to what i think is the safest place
 	// do this before clearing banks - we can keep the code in ROM this way
-	xor ax, ax
-	mov es, ax
 	//mov   ax, offset "driver_launch_slot_relocated!"
 	.byte   0xB8
 	.reloc  ., R_386_SEG16, "driver_launch_slot_relocated!"
@@ -127,19 +125,27 @@ driver_launch_slot:
 	mov si, offset driver_launch_slot_relocated
 	mov di, 0x2000
 	mov cx, offset ((driver_launch_slot_end - driver_launch_slot_relocated + 1) >> 1)
+	xor ax, ax
+	mov es, ax
 	rep movsw
 	
 	pop cx
 
 	// restore DS
-	xor ax, ax
+	// xor ax, ax - done above
 	mov ds, ax
 
 	// switch ROM slot, return to 0x2000
 	mov byte ptr [_driver_current_slot], 0xFF
-	mov ax, 0x2000
-	push ax
-	jmp _driver_switch_slot
+	call _driver_switch_slot
+
+	// reset the RTC
+	call _rtc_wait_ready
+	mov al, 0x10
+	out 0xCA, al
+	call _rtc_wait_ready
+	xor ax, ax
+	jmp 0x2000
 
 _rtc_wait_ready:
 	push ax
@@ -228,7 +234,7 @@ _driver_switch_slot_sram:
 	jmp _driver_switch_slot1
 // clobbers AX, DL
 _driver_unswitch_slot_sram:
-	xor al, al
+	xor ax, ax
 	out 0xCE, al
 	mov al, [_driver_bank_temp]
 	out 0xC1, al
@@ -272,14 +278,6 @@ _drs_postamble:
 
 	ASM_PLATFORM_RET 0x4
 
-// clobbers AX, assumes ES:BX == 1000:0AAA
-driver_flash_busyloop_until_done:
-	mov ah, byte ptr es:[bx]
-	mov al, byte ptr es:[bx]
-	cmp ah, al // DQ2 and/or DQ6 toggles if status register
-	jne driver_flash_busyloop_until_done
-	ret
-
 driver_write_slot:
 	push	si
 	push	di
@@ -308,7 +306,11 @@ driver_write_slot:
 _dws_loop:
 	mov byte ptr es:[bx], 0xA0
 	movsb // 3 cycles
-	call driver_flash_busyloop_until_done
+dws_driver_flash_busyloop_until_done:
+	mov ah, byte ptr es:[bx]
+	mov al, byte ptr es:[bx]
+	cmp ah, al // DQ2 and/or DQ6 toggles if status register
+	jne dws_driver_flash_busyloop_until_done
 	loop _dws_loop // 5 cycles
 
 	// stop bypass
@@ -325,7 +327,7 @@ _dws_loop:
 	jmp _drs_postamble
 
 driver_erase_bank:
-	xor al, al
+	xor ax, ax
 	test cl, 1
 	jnz driver_erase_bank_finish
 	and cl, 0xFE
@@ -349,7 +351,11 @@ driver_erase_bank:
 	xor bx, bx
 	mov byte ptr es:[bx], 0x30
 
-	call driver_flash_busyloop_until_done
+deb_driver_flash_busyloop_until_done:
+	mov ah, byte ptr es:[bx]
+	mov al, byte ptr es:[bx]
+	cmp ah, al // DQ2 and/or DQ6 toggles if status register
+	jne deb_driver_flash_busyloop_until_done
 
 	call _driver_unswitch_slot_sram
 	mov al, 1

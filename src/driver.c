@@ -38,9 +38,10 @@ static void clear_registers(void) {
     outportb(IO_HWINT_VECTOR, 0);
     outportb(IO_HWINT_ENABLE, 0);
     outportb(IO_INT_NMI_CTRL, 0);
+    outportb(IO_KEY_SCAN, 0x40);
 
     if (ws_system_color_active()) {
-        memset(MEM_COLOR_PALETTE(0), 0, 0x200);
+        memset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
         ws_mode_set(WS_MODE_MONO);
     }
 
@@ -52,6 +53,7 @@ void launch_slot(uint16_t slot, uint16_t bank) {
 
     driver_unlock();
     clear_registers();
+
     driver_launch_slot(0, slot, bank);
 }
 
