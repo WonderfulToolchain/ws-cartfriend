@@ -31,6 +31,8 @@
 	.global driver_lock
 	.global driver_unlock
 	.global fm_initial_slot
+	.global _fm_unlock_refcount
+	.global error_critical
 
 _rtc_wait_ready:
 	push ax
@@ -86,14 +88,48 @@ _avr_wake:
 	ret
 
 driver_lock:
+	mov al, [_fm_unlock_refcount]
+	cmp al, 0
+	jz driver_lock_underflow
+	dec al
+	mov [_fm_unlock_refcount], al
+	jnz driver_lock_no_lock
 	call _avr_sleep
+driver_lock_no_lock:
 	ASM_PLATFORM_RET
 
 driver_unlock:
+	mov al, [_fm_unlock_refcount]
+	cmp al, 0
+	jnz driver_unlock_already_unlocked
+	inc al
+	mov [_fm_unlock_refcount], al
+	jz driver_unlock_overflow
 	call _avr_wake
+driver_unlock_already_unlocked:
 	ASM_PLATFORM_RET
 
+driver_unlock_overflow:
+	mov ax, 3
+	mov dx, 0
+	//jmp far error_critical
+	.byte   0xEA
+	.word   error_critical
+	.reloc  ., R_386_SEG16, "error_critical!"
+	.word   0
+driver_lock_underflow:
+	mov ax, 4
+	mov dx, 0
+	//jmp far error_critical
+	.byte   0xEA
+	.word   error_critical
+	.reloc  ., R_386_SEG16, "error_critical!"
+	.word   0
+
+
 driver_init:
+	mov byte ptr [_fm_unlock_refcount], 0
+
 	/* call _avr_wake
 
 	// figure out what slot we're on, since we're unlocking

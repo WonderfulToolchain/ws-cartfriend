@@ -26,6 +26,7 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
+#include "ws/hardware.h"
 
 static void ui_browse_menu_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < 16) {
@@ -82,13 +83,11 @@ void ui_browse(void) {
         ui_reset_main_screen();
         driver_unlock();
 
-        // does the game use SRAM?
-        bool sram_used = false;
         memset(menu_list, 0xFF, 16);
         driver_read_slot(menu_list, result, 0xFF, 0xFFF0, 16);
-        sram_used = menu_list[0x0B] != 0;
 
-        if (sram_used) {
+        // does the game use SRAM?
+        if (menu_list[0x0B] != 0 && _CS >= 0x2000) {
             // figure out SRAM slots
             i = 0;
             for (uint8_t k = 0; k < SRAM_SLOTS; k++) {
@@ -114,7 +113,12 @@ void ui_browse(void) {
             sram_switch_to_slot(sram_slot);
         }
 
-        driver_lock();
+        // does the game leave IEEPROM unlocked?
+        if (!(menu_list[0x09] & 0x80)) {
+            // lock IEEPROM
+            outportw(IO_IEEP_CTRL, IEEP_PROTECT);
+        }
+
         input_wait_clear();
         wait_for_vblank();
 

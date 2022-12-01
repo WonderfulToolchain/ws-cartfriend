@@ -32,6 +32,7 @@
 	.global driver_erase_bank
 	.global driver_launch_slot
 	.global fm_initial_slot
+	.global _fm_unlock_refcount
 
 	.section .text
 	.align 2
@@ -362,6 +363,8 @@ driver_erase_bank_finish:
 _driver_bank_temp:
 	.byte 0
 _driver_current_slot:
+	.byte 0
+_fm_unlock_refcount:
 	.byte 0
 fm_initial_slot:
 	.byte 0

@@ -20,12 +20,14 @@
 #include "driver.h"
 #include "settings.h"
 #include "util.h"
+#include "ws/hardware.h"
 
 static void clear_registers(void) {
     // wait for vblank, disable display, reset some registers
     wait_for_vblank();
     cpu_irq_disable();
     outportw(IO_DISPLAY_CTRL, 0);
+    outportb(IO_LCD_SEG, 0);
     outportb(IO_SPR_BASE, 0);
     outportb(IO_SPR_FIRST, 0);
     outportb(IO_SPR_COUNT, 0);

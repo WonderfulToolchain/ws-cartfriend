@@ -20,6 +20,7 @@
 #include <ws.h>
 #include "driver.h"
 #include "lang.h"
+#include "sram.h"
 #include "ui.h"
 #include "util.h"
 #include "xmodem.h"
@@ -48,6 +49,8 @@ static void ui_tool_xmodem_ui_step(uint32_t bytes) {
 }
 
 static void ui_tool_sramcode_xm() {
+    sram_switch_to_slot(0xFF);
+
     ui_reset_main_screen();
     ui_puts_centered(false, 2, 0, lang_keys[LK_UI_XMODEM_RECEIVE]);
     ui_puts_centered(false, 3, 0, lang_keys[LK_UI_XMODEM_PRESS_B_TO_CANCEL]);

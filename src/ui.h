@@ -29,6 +29,7 @@
 #define UI_PAL_PBAR    10
 
 extern const char __far* const __far* lang_keys;
+extern uint8_t ui_low_battery_flag;
 
 void ui_init(void);
 void ui_show(void);

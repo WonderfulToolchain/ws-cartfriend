@@ -32,8 +32,8 @@
 #define SCREEN1 ((uint16_t*) 0x1800)
 #define SCREEN2 ((uint16_t*) 0x3800)
 
-static uint8_t scroll_y;
 const char __far* const __far* lang_keys;
+uint8_t ui_low_battery_flag;
 
 static const uint16_t __far theme_colorways[UI_THEME_COUNT][6] = {
     { // Light
@@ -54,6 +54,7 @@ static const uint16_t __far theme_colorways[UI_THEME_COUNT][6] = {
     }
 };
 
+static uint8_t scroll_y;
 static bool ui_dialog_open;
 
 void ui_update_theme(uint8_t current_theme) {
@@ -105,6 +106,7 @@ void ui_reset_alt_screen(void) {
 
 void ui_init(void) {
     lang_keys = lang_keys_en;
+    ui_low_battery_flag = 0;
 
     outportw(IO_DISPLAY_CTRL, 0);
     outportb(IO_SPR_FIRST, 0);
@@ -282,6 +284,11 @@ void ui_set_current_tab(uint8_t tab) {
 
 bool ui_poll_events(void) {
     input_update();
+
+    if (ui_low_battery_flag == 1 && !ui_dialog_open) {
+        ui_low_battery_flag = 2;
+        ui_dialog_run(0, 0, LK_DIALOG_LOW_BATTERY, LK_DIALOG_OK);
+    }
 
     if (input_pressed & KEY_ALEFT) {
         if (ui_current_tab > 0) {
@@ -542,9 +549,13 @@ uint8_t ui_dialog_run(uint16_t flags, uint8_t initial_option, uint16_t lk_questi
     }
 
     wait_for_vblank();
+    ui_reset_alt_screen();
+
+    input_wait_clear();
+    wait_for_vblank();
+
     ui_dialog_open = false;
     ui_update_theme(settings_local.color_theme);
-    ui_reset_alt_screen();
 
     return selected_option;
 }

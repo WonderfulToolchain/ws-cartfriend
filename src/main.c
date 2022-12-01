@@ -23,6 +23,8 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
+#include "ws/hardware.h"
+#include "ws/system.h"
 
 volatile uint8_t vbl_ticks;
 
@@ -31,6 +33,11 @@ void vblank_int_handler(void) {
 	vbl_ticks++;
 	vblank_input_update();
 	ws_hwint_ack(HWINT_VBLANK);
+}
+
+__attribute__((interrupt))
+void lowbat_nmi_handler(void) {
+	outportb(IO_INT_NMI_CTRL, 0);
 }
 
 void main(void) {
@@ -47,7 +54,9 @@ void main(void) {
 	input_wait_clear(); // wait for input to calm down
 
 	ui_set_current_tab(UI_TAB_BROWSE);
+	wait_for_vblank();
 	ui_show();
+    outportb(IO_LCD_SEG, LCD_SEG_ORIENT_H);
 
 	if (settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
 		ui_reset_main_screen();
@@ -56,6 +65,9 @@ void main(void) {
 		}
 	}
 
+	ws_cpuint_set_handler(CPUINT_IDX_NMI, lowbat_nmi_handler);
+	outportb(IO_INT_NMI_CTRL, NMI_ON_LOW_BATTERY);
+	
 	while (true) {
 		ui_reset_main_screen();
 
