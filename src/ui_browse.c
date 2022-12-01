@@ -53,9 +53,9 @@ static uint8_t iterate_carts(uint8_t *menu_list, uint8_t i) {
 
         memset(buffer, 0xFF, sizeof(buffer));
         if (driver_read_slot(buffer, slot, 0xFF, 0xFFF0, 16)) {
-            if (buffer[0] == 0xEA) {
+            if (buffer[0] == 0xEA || buffer[0] == 0x9A) {
                 menu_list[i++] = slot;
-            } 
+            }
         }
     }
     driver_lock();
