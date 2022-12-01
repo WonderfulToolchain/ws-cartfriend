@@ -37,11 +37,14 @@ static void clear_registers(void) {
     outportb(IO_SCR2_SCRL_Y, 0);
     outportb(IO_HWINT_VECTOR, 0);
     outportb(IO_HWINT_ENABLE, 0);
+    outportb(IO_INT_NMI_CTRL, 0);
 
     if (ws_system_color_active()) {
         memset(MEM_COLOR_PALETTE(0), 0, 0x200);
         ws_mode_set(WS_MODE_MONO);
     }
+
+    outportb(IO_HWINT_ACK, 0xFF);
 }
 
 void launch_slot(uint16_t slot, uint16_t bank) {

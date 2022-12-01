@@ -51,7 +51,7 @@ with (
 		print(f"#define LK_{k} {v}", file = fp_h)
 	print(f"#define LK_TOTAL {property_idx}\n", file = fp_h)
 	for k in property_langs.keys():
-		print(f"extern const char __far* const lang_keys_{k}[{property_idx}];", file = fp_h)
+		print(f"extern const char __far* const __far lang_keys_{k}[{property_idx}];", file = fp_h)
 
 	# Emit strings
 	property_strings = {}
@@ -65,7 +65,7 @@ with (
 
 	# Emit string arrays
 	for lang_key in property_langs.keys():
-		print(f"\nconst char __far* const lang_keys_{lang_key}[] = ", file = fp_c, end='')
+		print(f"\nconst char __far* const __far lang_keys_{lang_key}[] = ", file = fp_c, end='')
 		print("{", file = fp_c)
 		for k, v in sorted(property_keys.items(), key=lambda x: x[1]):
 			local_lang_key = lang_key

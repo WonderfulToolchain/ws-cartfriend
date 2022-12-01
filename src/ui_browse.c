@@ -120,8 +120,6 @@ void ui_browse(void) {
         }
 
         input_wait_clear();
-        wait_for_vblank();
-
         launch_slot(result, 0xFF);
     }
 }

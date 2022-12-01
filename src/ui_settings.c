@@ -33,6 +33,7 @@
 #define MENU_OPT_FORCECARTSRAM 3
 #define MENU_OPT_THEME 4
 #define MENU_OPT_SLOTMAP 5
+#define MENU_OPT_BACKUP_SRAM 6
 
 static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_SAVEMAP,
@@ -40,7 +41,8 @@ static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_ERASE_SRAM,
     LK_UI_SETTINGS_FORCECARTSRAM,
     LK_UI_SETTINGS_THEME,
-    LK_UI_SETTINGS_SLOTMAP
+    LK_UI_SETTINGS_SLOTMAP,
+    LK_UI_SETTINGS_BACKUP_SRAM
 };
 
 static uint16_t __far ui_theme_color_lks[] = {
@@ -152,6 +154,9 @@ void ui_settings(void) {
     menu_list[i++] = MENU_OPT_FORCECARTSRAM;
     menu_list[i++] = MENU_OPT_SAVE;
     menu_list[i++] = MENU_ENTRY_DIVIDER;
+    if (settings_local.active_sram_slot < SRAM_SLOTS) {
+        menu_list[i++] = MENU_OPT_BACKUP_SRAM;
+    }
     menu_list[i++] = MENU_OPT_ERASE_SRAM;
     menu_list[i++] = MENU_ENTRY_END;
 
@@ -232,6 +237,8 @@ Reselect:
                 settings_mark_changed();
             }
         }
+    } else if (result == MENU_OPT_BACKUP_SRAM) {
+        sram_switch_to_slot(0xFF);
     } else if (result == MENU_OPT_ERASE_SRAM) {
         i = 0;
         for (uint8_t j = 0; j < SRAM_SLOTS; j++) {

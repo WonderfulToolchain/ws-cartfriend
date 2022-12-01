@@ -89,8 +89,9 @@ KeyRepressed:
 }
 
 void input_wait_clear(void) {
-	while (input_keys != 0) {
+	do {
 		input_reset();
 		wait_for_vblank();
-	}
+	} while (input_keys != 0);
+	input_update();
 }
