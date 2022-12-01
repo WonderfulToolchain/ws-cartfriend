@@ -51,7 +51,7 @@ static uint8_t iterate_carts(uint8_t *menu_list, uint8_t i) {
             }
         }
 
-        memset(buffer, 0, sizeof(buffer));
+        memset(buffer, 0xFF, sizeof(buffer));
         if (driver_read_slot(buffer, slot, 0xFF, 0xFFF0, 16)) {
             if (buffer[0] == 0xEA) {
                 menu_list[i++] = slot;
@@ -80,9 +80,11 @@ void ui_browse(void) {
     uint16_t result = ui_menu_select(&menu);
     if (result < 16) {
         ui_reset_main_screen();
+        driver_unlock();
 
         // does the game use SRAM?
         bool sram_used = false;
+        memset(menu_list, 0xFF, 16);
         driver_read_slot(menu_list, result, 0xFF, 0xFFF0, 16);
         sram_used = menu_list[0x0B] != 0;
 
@@ -108,12 +110,13 @@ void ui_browse(void) {
             } else if (i == 1) {
                 sram_slot = menu_list[0];
             }
-        
+
             sram_switch_to_slot(sram_slot);
         }
 
+        driver_lock();
         input_wait_clear();
-		wait_for_vblank();
+        wait_for_vblank();
 
         launch_slot(result, 0xFF);
     }

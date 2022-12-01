@@ -56,7 +56,9 @@ _rtc_read_data_al:
 
 _driver_change_loop:
 	push cx
-	mov cx, 4600 // ~1.5ms
+	// ~1.5ms is not reliable for rapid lock/unlock cycles
+	// (maybe we shouldn't do rapid lock/unlock cycles?)
+	mov cx, 9200 // ~3ms
 _dc_loop2:
 	loop _dc_loop2
 	pop cx
