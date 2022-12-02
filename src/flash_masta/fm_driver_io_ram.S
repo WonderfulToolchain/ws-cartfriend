@@ -302,13 +302,14 @@ driver_write_slot:
 	mov byte ptr es:[bx], 0xAA
 	mov byte ptr es:[0x555], 0x55
 	mov byte ptr es:[bx], 0x20
-
+	xor bx, bx
+	cld
 _dws_loop:
 	mov byte ptr es:[bx], 0xA0
-	movsb // 3 cycles
+	movsb
 dws_driver_flash_busyloop_until_done:
-	mov ah, byte ptr es:[bx]
-	mov al, byte ptr es:[bx]
+	mov ah, byte ptr es:[di]
+	mov al, byte ptr es:[di]
 	cmp ah, al // DQ2 and/or DQ6 toggles if status register
 	jne dws_driver_flash_busyloop_until_done
 	loop _dws_loop // 5 cycles
@@ -316,7 +317,7 @@ dws_driver_flash_busyloop_until_done:
 	// stop bypass
 	mov byte ptr es:[bx], 0x90
 	mov byte ptr es:[bx], 0x00
-
+	
 	pop	bp
 	pop	es
 	pop	ds

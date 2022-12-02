@@ -39,7 +39,6 @@
 #define NAK 21
 #define CAN 24
 
-extern uint8_t vbl_ticks;
 static uint8_t xmodem_idx;
 
 bool xmodem_poll_exit(void) {

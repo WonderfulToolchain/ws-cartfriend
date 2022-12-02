@@ -26,7 +26,7 @@
 #include "ws/hardware.h"
 #include "ws/system.h"
 
-volatile uint8_t vbl_ticks;
+volatile uint16_t vbl_ticks;
 
 __attribute__((interrupt))
 void vblank_int_handler(void) {

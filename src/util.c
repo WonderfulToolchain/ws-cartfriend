@@ -17,6 +17,7 @@
 
 #include <ws.h>
 
+// it's an uint16_t but we only want the low byte
 extern volatile uint8_t vbl_ticks;
 
 void wait_for_vblank(void) {

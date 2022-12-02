@@ -309,9 +309,9 @@ bool ui_poll_events(void) {
 
 // Work indicator
 
-extern uint8_t vbl_ticks;
+extern uint16_t vbl_ticks;
 uint8_t ui_work_indicator;
-uint8_t ui_work_indicator_vbl_ticks;
+uint16_t ui_work_indicator_vbl_ticks;
 static const uint8_t __far ui_work_table[] = {
     'q', 'd', 'b', 'p'
 };

@@ -29,6 +29,9 @@
 #include "ui.h"
 #include "util.h"
 #include "ws/cartridge.h"
+#include "ws/hardware.h"
+
+#define USE_PARTIAL_WRITES
 
 static uint8_t sram_get_slot(uint8_t sram_slot) {
     uint8_t slot = 0x80 | (sram_slot << 3);
@@ -43,7 +46,6 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
     uint8_t driver_slot = driver_get_launch_slot();
     uint8_t buffer[256];
     ui_pbar_state_t pbar = {
-        .step_max = 2048,
         .x = 1,
         .y = 13,
         .width = 27
@@ -53,46 +55,52 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
     ui_reset_main_screen();
     ui_puts_centered(false, 2, 0, lang_keys[is_restore ? LK_UI_MSG_RESTORE_SRAM : LK_UI_MSG_BACKUP_SRAM]);
 
-    if (!is_restore) {
-        // for backup, erase slots first
-        for (uint8_t i = 0; i < 8; i++) {
-            driver_erase_bank(0, driver_slot, rom_slot + i);
-        }
-    }
+    if (_CS >= 0x2000) {
+        if (is_restore) {
+            pbar.step_max = 256;
+            for (uint16_t i = 0; i < 256; i++) {
+                pbar.step = i;
+                ui_pbar_draw(&pbar);
+                ui_step_work_indicator();
 
-    for (uint16_t i = 0; i < 2048; i++) {
-        pbar.step = i;
-        ui_pbar_draw(&pbar);
-        ui_step_work_indicator();
+                ws_bank_ram_set(i >> 5);
+                uint8_t bank = (i >> 5) | rom_slot;
+                uint16_t offset = (i << 11);
+                outportb(IO_BANK_ROM1, bank);
 
-        ws_bank_ram_set(i >> 8);
-        uint8_t bank = (i >> 8) | rom_slot;
-        uint16_t offset = (i << 8);
-        uint8_t __far* sram_buffer = MK_FP(0x1000, offset);
-
-        if (_CS < 0x2000) {
-            // if booting from SRAM, fake this step
-            wait_for_vblank();
-            wait_for_vblank();
-        } else {
-            if (is_restore) {
                 // ROM -> SRAM
-                driver_read_slot(buffer, driver_slot, bank, offset, sizeof(buffer));
-                memcpy(sram_buffer, buffer, 256);
-            } else /* is_backup */ {
-                // SRAM -> ROM
+                memcpy(MK_FP(0x1000, offset), MK_FP(0x3000, offset), 2048);
+            }
+        } else {
+            // for backup, erase slots first
+            for (uint8_t i = 0; i < 8; i++) {
+                ui_step_work_indicator();
+                driver_erase_bank(0, driver_slot, rom_slot + i);
+            }
+
+            pbar.step_max = 2048;
+            for (uint16_t i = 0; i < 2048; i++) {
+                pbar.step = i;
+                ui_pbar_draw(&pbar);
+                ui_step_work_indicator();
+
+                ws_bank_ram_set(i >> 8);
+                uint8_t bank = (i >> 8) | rom_slot;
+                uint16_t offset = (i << 8);
+                uint8_t __far* sram_buffer = MK_FP(0x1000, offset);
+
                 memcpy(buffer, sram_buffer, 256);
-                uint16_t skip_len = 0;
-                while (skip_len < 256) {
-                    if (buffer[skip_len] != 0xFF) {
+#ifdef USE_PARTIAL_WRITES
+                uint16_t *buffer16 = (uint16_t*) buffer;
+                for (uint8_t i = 0; i < (sizeof(buffer) >> 1); i++) {
+                    if (buffer16[i] != 0xFFFF) {
+                        driver_write_slot(buffer, driver_slot, bank, offset, sizeof(buffer));
                         break;
-                    } else {
-                        skip_len++;
                     }
                 }
-                if (skip_len < 256) {
-                    driver_write_slot(buffer, driver_slot, bank, offset + skip_len, sizeof(buffer) - skip_len);
-                }
+#else
+                driver_write_slot(buffer, driver_slot, bank, offset, sizeof(buffer));
+#endif
             }
         }
     }
