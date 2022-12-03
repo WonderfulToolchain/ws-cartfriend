@@ -15,6 +15,7 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <ws.h>
 #include "config.h"
@@ -32,6 +33,11 @@
 #define BROWSE_SUB_INFO 1
 #define BROWSE_SUB_RENAME 2
 
+// in mbits
+static const uint8_t __far rom_size_table[] = {
+    1, 2, 4, 8, 16, 24, 32, 48, 62, 128
+};
+
 static void ui_browse_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     char buf_name[28];
     uint8_t *cart_metadata = (uint8_t*) userdata;
@@ -42,8 +48,9 @@ static void ui_browse_menu_build_line(uint8_t entry_id, void *userdata, char *bu
             buf_name[23] = 0;
         } else {
             npf_snprintf(buf_name, sizeof(buf_name), lang_keys[LK_UI_BROWSE_SLOT_DEFAULT_NAME],
-                (uint16_t) cart_metadata[(entry_id << 2)],     (uint16_t) cart_metadata[(entry_id << 2) + 1],
-                (uint16_t) cart_metadata[(entry_id << 2) + 2], (uint16_t) cart_metadata[(entry_id << 2) + 3]
+                (uint16_t) cart_metadata[(entry_id*5) + 4],
+                (uint16_t) cart_metadata[(entry_id*5)],     (uint16_t) cart_metadata[(entry_id*5) + 1],
+                (uint16_t) cart_metadata[(entry_id*5) + 2], (uint16_t) cart_metadata[(entry_id*5) + 3]
             );
         }
         npf_snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_SLOT], (uint16_t) (entry_id + 1), ' ', ((const char __far*) buf_name));
@@ -58,6 +65,10 @@ static uint16_t __far browse_sub_lks[] = {
 
 static void ui_browse_submenu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len) {
     strncpy(buf, lang_keys[browse_sub_lks[entry_id]], buf_len);
+}
+
+static bool ui_read_rom_header(void *buffer, uint8_t slot) {
+    return driver_read_slot(buffer, slot, 0xFF, 0xFFF0, 16);
 }
 
 static uint8_t iterate_carts(uint8_t *menu_list, uint8_t *cart_metadata, uint8_t i) {
@@ -79,13 +90,19 @@ static uint8_t iterate_carts(uint8_t *menu_list, uint8_t *cart_metadata, uint8_t
         }
 
         memset(buffer, 0xFF, sizeof(buffer));
-        if (driver_read_slot(buffer, slot, 0xFF, 0xFFF0, 16)) {
+        if (ui_read_rom_header(buffer, slot)) {
+            // is the first byte a valid jump call?
             if (buffer[0] == 0xEA || buffer[0] == 0x9A) {
-		cart_metadata[(slot << 2)] = buffer[0x08];
-		cart_metadata[(slot << 2)+1] = buffer[0x09];
-		cart_metadata[(slot << 2)+2] = buffer[0x0E];
-		cart_metadata[(slot << 2)+3] = buffer[0x0F];
-                menu_list[i++] = slot;
+                // is the target plausibly outside of internal RAM?
+                uint16_t dest_high = *((uint16_t*) (buffer + 3));
+                if (dest_high != 0xFFFF && dest_high != 0x0000) {
+                    cart_metadata[(slot*5)] = buffer[0x08];
+                    cart_metadata[(slot*5)+1] = buffer[0x09];
+                    cart_metadata[(slot*5)+2] = buffer[0x0F];
+                    cart_metadata[(slot*5)+3] = buffer[0x0E];
+                    cart_metadata[(slot*5)+4] = buffer[0x06];
+                    menu_list[i++] = slot;
+                }
             }
         }
     }
@@ -94,9 +111,95 @@ static uint8_t iterate_carts(uint8_t *menu_list, uint8_t *cart_metadata, uint8_t
     return i;
 }
 
+void ui_browse_info(uint8_t slot) {
+    char buf[32], buf2[24];
+    uint8_t rom_header[16];
+
+    ui_reset_main_screen();
+    ui_read_rom_header(rom_header, slot);
+    input_wait_clear();
+
+    npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ID_VAL],
+        (uint16_t) rom_header[6],
+        (uint16_t) rom_header[8],
+        (uint16_t) rom_header[9]);
+    ui_printf(false, 1, 1, 0, lang_keys[LK_UI_BROWSE_INFO_ID], (const char __far*) buf);
+
+    if (rom_header[10] >= sizeof(rom_size_table)) {
+        strncpy(buf, lang_keys[LK_UI_BROWSE_INFO_UNKNOWN], sizeof(buf));
+    } else {
+        npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ROM_SIZE_MBIT],
+            (uint16_t) rom_size_table[rom_header[10]]);
+    }
+
+    ui_printf(false, 1, 2, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_SIZE], (const char __far*) buf);
+
+    ui_puts(false, 1, 3, 0, lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE]);
+    uint8_t save_str_x = 2 + strlen(lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE]);
+    uint8_t save_str_y = 3;
+    if (rom_header[11] == 0x00) {
+        ui_puts(false, save_str_x, save_str_y, 0, lang_keys[LK_UI_BROWSE_INFO_NONE]);
+    } else {
+        if (rom_header[11] & 0x0F) {
+            uint16_t kbit = 0;
+            switch (rom_header[11] & 0x0F) {
+            case 0x1: kbit = 64; break;
+            case 0x2: kbit = 256; break;
+            case 0x3: kbit = 1024; break;
+            case 0x4: kbit = 2048; break;
+            case 0x5: kbit = 4096; break;
+            }
+            if (kbit == 0) {
+                strncpy(buf, lang_keys[LK_UI_BROWSE_INFO_UNKNOWN], sizeof(buf));
+            } else {
+                npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_DECIMAL], kbit);
+            }
+            ui_printf(false, save_str_x, save_str_y++, 0, lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE_SRAM], (const char __far*) buf);
+        }
+        if (rom_header[11] & 0xF0) {
+            uint16_t kbit = 0;
+            switch (rom_header[11] >> 4) {
+            case 0x1: kbit = 1; break;
+            case 0x2: kbit = 16; break;
+            case 0x5: kbit = 8; break;
+            }
+            if (kbit == 0) {
+                strncpy(buf, lang_keys[LK_UI_BROWSE_INFO_UNKNOWN], sizeof(buf));
+            } else {
+                npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_DECIMAL], kbit);
+            }
+            ui_printf(false, save_str_x, save_str_y++, 0, lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE_EEPROM], (const char __far*) buf);
+        }
+    }
+
+    ui_printf(false, 1, 5, 0, lang_keys[LK_UI_BROWSE_INFO_COLOR], (const char __far*) lang_keys[
+        rom_header[7] > 1 ? LK_UI_BROWSE_INFO_UNKNOWN : (rom_header[7] ? LK_CONFIG_YES : LK_CONFIG_NO)
+    ]);
+    ui_printf(false, 1, 6, 0, lang_keys[LK_UI_BROWSE_INFO_ORIENTATION], (const char __far*) lang_keys[
+        rom_header[12] & 0x01 ? LK_UI_BROWSE_INFO_VERTICAL : LK_UI_BROWSE_INFO_HORIZONTAL
+    ]);
+
+    ui_printf(false, 1, 8, 0, lang_keys[LK_UI_BROWSE_INFO_RTC], (const char __far*) lang_keys[
+        rom_header[13] & 0x01 ? LK_CONFIG_YES : LK_CONFIG_NO
+    ]);
+    ui_printf(false, 1, 9, 0, lang_keys[LK_UI_BROWSE_INFO_EEPROM], (const char __far*) lang_keys[
+        rom_header[9] & 0x80 ? LK_CONFIG_YES : LK_CONFIG_NO
+    ]);
+
+    ui_printf(false, 1, 11, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_SPEED], (uint16_t) ((rom_header[12] & 0x04) ? 1 : 3));
+    ui_printf(false, 1, 12, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_BUS_SIZE], (uint16_t) ((rom_header[12] & 0x02) ? 8 : 16));
+
+    ui_printf(false, 1, 14, 0, lang_keys[LK_UI_BROWSE_INFO_CHECKSUM], (uint16_t) rom_header[15], (uint16_t) rom_header[14]);
+
+    while (ui_poll_events()) {
+        wait_for_vblank();
+        if (input_pressed & (KEY_A | KEY_B)) return;
+    }
+}
+
 void ui_browse(void) {
     uint8_t menu_list[256];
-    uint8_t cart_metadata[512];
+    uint8_t cart_metadata[640];
     uint8_t i = 0;
 
     i = iterate_carts(menu_list, cart_metadata, i);
@@ -121,6 +224,7 @@ void ui_browse(void) {
             };
             i = 0;
             menu_list[i++] = BROWSE_SUB_LAUNCH;
+            menu_list[i++] = BROWSE_SUB_INFO;
             menu_list[i++] = BROWSE_SUB_RENAME;
             menu_list[i++] = MENU_ENTRY_END;
             subaction = ui_popup_menu_run(&popup_menu);
@@ -132,9 +236,9 @@ void ui_browse(void) {
             driver_unlock();
 
             memset(menu_list, 0xFF, 16);
-            driver_read_slot(menu_list, result, 0xFF, 0xFFF0, 16);
+            ui_read_rom_header(menu_list, result);
 
-            // does the game use SRAM?
+            // does the game use save data?
             if (menu_list[0x0B] != 0 && _CS >= 0x2000) {
                 // figure out SRAM slots
                 i = 0;
@@ -162,6 +266,7 @@ void ui_browse(void) {
             } else {
                 if (settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
                     settings_local.active_sram_slot = SRAM_SLOT_NONE;
+                    settings_mark_changed();
                 }
             }
 
@@ -173,6 +278,8 @@ void ui_browse(void) {
 
             input_wait_clear();
             launch_slot(result, 0xFF);
+        } else if (subaction == BROWSE_SUB_INFO) {
+            ui_browse_info(result);
         } else if (subaction == BROWSE_SUB_RENAME) {
             if (result < GAME_SLOTS) {
                 if (settings_local.slot_name[result][0] < 0x20) {

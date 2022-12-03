@@ -467,9 +467,6 @@ uint16_t ui_menu_select(ui_menu_state_t *menu) {
         }
     }
 
-    wait_for_vblank();
-    input_wait_clear();
-
     return result;
 }
 
@@ -517,13 +514,14 @@ uint16_t ui_popup_menu_run(ui_popup_menu_state_t *menu) {
     menu->y = 17 - menu->height;
     menu->pos = 0;
 
-    wait_for_vblank();
-    ui_dialog_open = true;
-    ui_update_theme(settings_local.color_theme);
-
     ui_putc(true, 25, 17, ' ', UI_PAL_BARI);
     ui_putc(true, 26, 17, UI_GLYPH_PASSAGE, UI_PAL_BARI);
     ui_putc(true, 27, 17, ' ', UI_PAL_BARI);
+    input_wait_clear();
+
+    wait_for_vblank();
+    ui_dialog_open = true;
+    ui_update_theme(settings_local.color_theme);
 
     for (uint8_t i = 0; i < menu->height; i++) {
         ui_popup_menu_draw_line(menu, i, i == menu->pos ? UI_PAL_DIALOGI : UI_PAL_DIALOG);
