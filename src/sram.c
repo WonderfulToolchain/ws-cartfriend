@@ -106,6 +106,7 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
     }
 
     ui_clear_work_indicator();
+    ui_update_indicators();
 }
 
 void sram_erase(uint8_t sram_slot) {
@@ -174,6 +175,8 @@ void sram_erase(uint8_t sram_slot) {
 
         driver_lock();
     }
+
+    ui_update_indicators();
 }
 
 void sram_switch_to_slot(uint8_t sram_slot) {

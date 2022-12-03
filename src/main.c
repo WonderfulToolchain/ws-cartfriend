@@ -26,6 +26,14 @@
 #include "ws/hardware.h"
 #include "ws/system.h"
 
+// Memory map:
+// 0x0000 - 0x1800: Heap
+// 0x1800 - 0x2000: Screen 1
+// 0x2000 - 0x3800: Character set [384 glyphs]
+// 0x3800 - 0x3C80: Screen 2
+// 0x3C80 - 0x3D00: Reserved (About menu sprites)
+// 0x3D00 - 0x3F00: Reserved
+
 volatile uint16_t vbl_ticks;
 
 __attribute__((interrupt))

@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ws.h>
+#include "config.h"
 #include "driver.h"
 #include "input.h"
 #include "lang.h"
@@ -28,9 +29,6 @@
 #include "util.h"
 #include "ws/display.h"
 #include "ws/system.h"
-
-#define SCREEN1 ((uint16_t*) 0x1800)
-#define SCREEN2 ((uint16_t*) 0x3800)
 
 const char __far* const __far* lang_keys;
 uint8_t ui_low_battery_flag;
@@ -55,7 +53,7 @@ static const uint16_t __far theme_colorways[UI_THEME_COUNT][6] = {
 };
 
 static uint8_t scroll_y;
-static bool ui_dialog_open;
+bool ui_dialog_open;
 
 void ui_update_theme(uint8_t current_theme) {
     wait_for_vblank();
@@ -69,12 +67,15 @@ void ui_update_theme(uint8_t current_theme) {
         MEM_COLOR_PALETTE(2)[1] = colorway[1];
         MEM_COLOR_PALETTE(3)[0] = colorway[1];
         MEM_COLOR_PALETTE(3)[1] = colorway[4];
+        MEM_COLOR_PALETTE(12)[1] = colorway[0];
         MEM_COLOR_PALETTE(8)[0] = colorway[5];
         MEM_COLOR_PALETTE(8)[1] = colorway[0];
         MEM_COLOR_PALETTE(9)[0] = colorway[0];
         MEM_COLOR_PALETTE(9)[1] = colorway[5];
         MEM_COLOR_PALETTE(10)[0] = colorway[5];
         MEM_COLOR_PALETTE(10)[1] = RGB(15, 0, 0);
+        MEM_COLOR_PALETTE(11)[0] = colorway[ui_dialog_open ? 3 : 5];
+        MEM_COLOR_PALETTE(11)[1] = colorway[ui_dialog_open ? 2 : 4];
     } else {
         if (current_theme & 0x80) {
             // dark mode
@@ -86,12 +87,15 @@ void ui_update_theme(uint8_t current_theme) {
         if (ui_dialog_open) {
             outportw(0x20, 4 << 4 | 3);
             outportw(0x22, 3 << 4 | 4);
+            outportw(0x36, 4 << 4 | 3);
         } else {
             outportw(0x20, 7 << 4);
             outportw(0x22, 7);
+            outportw(0x36, 2 << 4);
         }
         outportw(0x24, 5 << 4 | 2);
         outportw(0x26, 2 << 4 | 5);
+        outportw(0x38, 7 << 4);
         outportw(0x30, 7 << 4);
         outportw(0x32, 7);
         outportw(0x34, 4 << 4);
@@ -138,7 +142,8 @@ void ui_init(void) {
     }
 
     outportb(IO_SCR_BASE, SCR1_BASE((uint16_t) SCREEN1) | SCR2_BASE((uint16_t) SCREEN2));
-    ui_puts(true, 28 - strlen(lang_keys[LK_NAME]), 17, 2, lang_keys[LK_NAME]);
+    //ui_puts(true, 28 - strlen(lang_keys[LK_NAME]), 17, 2, lang_keys[LK_NAME]);
+    ui_putc(true, 26, 17, UI_GLYPH_PASSAGE, 2);
 }
 
 void ui_show(void) {
@@ -179,6 +184,11 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
     while (*buf != '\0') {
+        if (*buf == '\x05') {
+            if (color == 0) prefix = SCR_ENTRY_PALETTE(UI_PAL_LIGHT);
+            buf++;
+            continue;
+        }
         ws_screen_put(screen, prefix | ((uint8_t) *(buf++)), x++, y);
         if (x == 29) return;
     }
@@ -282,10 +292,18 @@ void ui_set_current_tab(uint8_t tab) {
     }
 }
 
+#define UI_WORK_INDICATOR_X 24
+
+void ui_update_indicators(void) {
+    ui_putc(true, 0, 17, settings_local.active_sram_slot < SRAM_SLOTS ? UI_GLYPH_SRAM_ACTIVE : 0, 2);
+}
+
 bool ui_poll_events(void) {
     input_update();
+    ui_update_indicators();
 
     if (ui_low_battery_flag == 1 && !ui_dialog_open) {
+        ui_putc(true, 1, 17, UI_GLYPH_LOW_BATTERY, 2);
         ui_low_battery_flag = 2;
         ui_dialog_run(0, 0, LK_DIALOG_LOW_BATTERY, LK_DIALOG_OK);
     }
@@ -318,7 +336,7 @@ static const uint8_t __far ui_work_table[] = {
 
 void ui_step_work_indicator(void) {
     if (ui_work_indicator_vbl_ticks == 0xFF || (ui_work_indicator_vbl_ticks != (vbl_ticks >> 2))) {
-        ui_putc(true, 0, 17, ui_work_table[ui_work_indicator], 2);
+        ui_putc(true, UI_WORK_INDICATOR_X, 17, ui_work_table[ui_work_indicator], 2);
         ui_work_indicator = (ui_work_indicator + 1) & 3;
         ui_work_indicator_vbl_ticks = vbl_ticks >> 2;
     }
@@ -327,7 +345,7 @@ void ui_step_work_indicator(void) {
 void ui_clear_work_indicator(void) {
     ui_work_indicator = 0;
     ui_work_indicator_vbl_ticks = 0xFF;
-    ui_putc(true, 0, 17, ' ', 2);
+    ui_putc(true, UI_WORK_INDICATOR_X, 17, ' ', 2);
 }
 
 // Menu system
@@ -342,7 +360,7 @@ static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color)
     char buf_right[31];
     buf[0] = 0; buf_right[0] = 0;
 
-    menu->build_line_func(menu->list[pos], buf, 30, buf_right, 30);
+    menu->build_line_func(menu->list[pos], menu->build_line_data, buf, 30, buf_right, 30);
     if (buf[0] != 0) {
         ui_puts(false, 1, pos, color, buf);
     }
@@ -362,16 +380,21 @@ static void ui_menu_redraw(ui_menu_state_t *menu) {
     }
 }
 
-static void ui_menu_move(ui_menu_state_t *menu, int8_t delta) {
+static uint8_t ui_menu_list_move_pos(uint8_t *list, int8_t delta, uint8_t pos, uint8_t height) {
     int last_pos;
-    int new_pos = menu->pos;
+    int new_pos = pos;
     do {
         last_pos = new_pos;
         new_pos = new_pos + delta;
         if (new_pos < 0) new_pos = 0;
-        else if (new_pos >= menu->height) new_pos = menu->height - 1;
-    } while (last_pos != new_pos && (menu->list[new_pos] == MENU_ENTRY_DIVIDER));
+        else if (new_pos >= height) new_pos = height - 1;
+    } while (last_pos != new_pos && (list[new_pos] == MENU_ENTRY_DIVIDER));
 
+    return new_pos;
+}
+
+static void ui_menu_move(ui_menu_state_t *menu, int8_t delta) {
+    uint8_t new_pos = ui_menu_list_move_pos(menu->list, delta, menu->pos, menu->height);
     if (new_pos == menu->pos) return;
 
     // draw lines
@@ -407,6 +430,7 @@ uint16_t ui_menu_select(ui_menu_state_t *menu) {
     ui_clear_work_indicator();
     ui_menu_redraw(menu);
 
+    uint16_t result = MENU_ENTRY_END;
     while (ui_poll_events()) {
         if (input_pressed & KEY_UP) {
             ui_menu_move(menu, -1);
@@ -418,23 +442,137 @@ uint16_t ui_menu_select(ui_menu_state_t *menu) {
         uint8_t curr_entry = menu->list[menu->pos];
         if (menu->flags & MENU_SEND_LEFT_RIGHT) {
             if (input_pressed & KEY_LEFT) {
-                return curr_entry | MENU_ACTION_LEFT;
+                result = curr_entry | MENU_ACTION_LEFT;
+                break;
             }
             if (input_pressed & KEY_RIGHT) {
-                return curr_entry | MENU_ACTION_RIGHT;
+                result = curr_entry | MENU_ACTION_RIGHT;
+                break;
             }
         }
         if (menu->flags & MENU_B_AS_BACK) {
             if (input_pressed & KEY_B) {
-                return MENU_ENTRY_END;
+                break;
+            }
+        }
+        if (menu->flags & MENU_B_AS_ACTION) {
+            if (input_pressed & KEY_B) {
+                result = curr_entry | MENU_ACTION_B;
+                break;
             }
         }
         if (input_pressed & KEY_A) {
-            return curr_entry;
+            result = curr_entry;
+            break;
         }
     }
 
-    return MENU_ENTRY_END;
+    wait_for_vblank();
+    input_wait_clear();
+
+    return result;
+}
+
+// Popup menu system
+
+static uint8_t ui_popup_menu_strlen(ui_popup_menu_state_t *menu, uint8_t i) {
+    char buf[31];
+    buf[0] = 0;
+
+    menu->build_line_func(menu->list[i], menu->build_line_data, buf, 30);
+    return strlen(buf);
+}
+
+static void ui_popup_menu_draw_line(ui_popup_menu_state_t *menu, uint8_t pos, uint8_t color) {
+    if (menu->list[pos] == MENU_ENTRY_DIVIDER) {
+        ws_screen_fill(SCREEN2, 196 | SCR_ENTRY_PALETTE(8), menu->x, menu->y + pos, menu->width, 1);
+        return;
+    }
+
+    char buf[31];
+    buf[0] = 0;
+
+    menu->build_line_func(menu->list[pos], menu->build_line_data, buf, 30);
+    ws_screen_fill(SCREEN2, SCR_ENTRY_PALETTE(color), menu->x, menu->y + pos, menu->width, 1);    
+    if (buf[0] != 0) {
+        ui_puts(true, menu->x + 1, menu->y + pos, color, buf);
+    }
+}
+
+uint16_t ui_popup_menu_run(ui_popup_menu_state_t *menu) {
+    ui_clear_work_indicator();
+
+    // init
+    menu->width = 0;
+    menu->height = u8_arraylist_len(menu->list);
+    for (uint8_t i = 0; i < menu->height; i++) {
+        uint8_t new_width = ui_popup_menu_strlen(menu, i);
+        if (new_width > menu->width) {
+            menu->width = new_width;
+        }
+    }
+    menu->width += 2;
+
+    menu->x = 28 - menu->width;
+    menu->y = 17 - menu->height;
+    menu->pos = 0;
+
+    wait_for_vblank();
+    ui_dialog_open = true;
+    ui_update_theme(settings_local.color_theme);
+
+    ui_putc(true, 25, 17, ' ', UI_PAL_BARI);
+    ui_putc(true, 26, 17, UI_GLYPH_PASSAGE, UI_PAL_BARI);
+    ui_putc(true, 27, 17, ' ', UI_PAL_BARI);
+
+    for (uint8_t i = 0; i < menu->height; i++) {
+        ui_popup_menu_draw_line(menu, i, i == menu->pos ? UI_PAL_DIALOGI : UI_PAL_DIALOG);
+    }
+
+    // select
+    uint16_t result = MENU_ENTRY_END;
+    while (true) {
+        uint8_t old_pos = menu->pos;
+
+        wait_for_vblank();
+        input_update();
+
+        if (input_pressed & KEY_UP) {
+            menu->pos = ui_menu_list_move_pos(menu->list, -1, menu->pos, menu->height);
+        }
+        if (input_pressed & KEY_DOWN) {
+            menu->pos = ui_menu_list_move_pos(menu->list, 1, menu->pos, menu->height);
+        }
+
+        if (old_pos != menu->pos) {
+            ui_popup_menu_draw_line(menu, old_pos, UI_PAL_DIALOG);
+            ui_popup_menu_draw_line(menu, menu->pos, UI_PAL_DIALOGI);
+        }
+
+        uint8_t curr_entry = menu->list[menu->pos];
+        if (input_pressed & KEY_B) {
+            break;
+        }
+        if (input_pressed & KEY_A) {
+            result = curr_entry;
+            break;
+        }
+    }
+
+    wait_for_vblank();
+    ui_reset_alt_screen();
+
+    ui_putc(true, 25, 17, ' ', UI_PAL_BAR);
+    ui_putc(true, 26, 17, UI_GLYPH_PASSAGE, UI_PAL_BAR);
+    ui_putc(true, 27, 17, ' ', UI_PAL_BAR);
+
+    input_wait_clear();
+    wait_for_vblank();
+
+    ui_dialog_open = false;
+    ui_update_theme(settings_local.color_theme);
+
+    return result;
 }
 
 // Progress bar
@@ -559,3 +697,4 @@ uint8_t ui_dialog_run(uint16_t flags, uint8_t initial_option, uint16_t lk_questi
 
     return selected_option;
 }
+

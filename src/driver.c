@@ -45,6 +45,8 @@ static void clear_registers(void) {
         ws_mode_set(WS_MODE_MONO);
     }
 
+    outportb(IO_SCR_BASE, 0x26);
+
     outportb(IO_HWINT_ACK, 0xFF);
 }
 

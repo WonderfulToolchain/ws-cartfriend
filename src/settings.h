@@ -26,7 +26,7 @@
 #define SLOT_TYPE_APPENDED_FILES 3 /* Tentative */
 #define SLOT_TYPE_UNUSED 0xFF
 
-#define SETTINGS_VERSION 1
+#define SETTINGS_VERSION 2
 
 #define SRAM_SLOT_ALL 0xFD
 #define SRAM_SLOT_FIRST_BOOT 0xFE
@@ -41,6 +41,8 @@ typedef struct __attribute__((packed)) {
 	uint8_t sram_slot_mapping[SRAM_SLOTS]; // 38
 
 	uint8_t color_theme; // 39
+
+	uint8_t slot_name[GAME_SLOTS][24]; // 423
 } settings_t;
 
 extern settings_t settings_local;

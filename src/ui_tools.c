@@ -30,7 +30,7 @@
 static uint16_t __far ui_tool_lks[] = {
     LK_UI_TOOLS_SRAMCODE_XM
 };
-static void ui_tool_menu_build_line(uint8_t entry_id, char *buf, int buf_len, char *buf_right, int buf_right_len) {
+static void ui_tool_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     strncpy(buf, lang_keys[ui_tool_lks[entry_id]], buf_len);
 }
 

@@ -18,6 +18,7 @@
 #include <string.h>
 #include "config.h"
 #include "driver.h"
+#include "lang.h"
 #include "settings.h"
 #include "ui.h"
 
@@ -50,6 +51,8 @@ void settings_reset(void) {
                 settings_local.sram_slot_mapping[sram_slot++] = i;
             }
         }
+        settings_local.slot_name[i][0] = 0;
+        settings_local.slot_name[i][1] = 0;
     }
     while (sram_slot < SRAM_SLOTS) {
         settings_local.sram_slot_mapping[sram_slot++] = 0xFF;
@@ -74,8 +77,6 @@ void settings_load(void) {
             driver_read_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), settings_slot << 10, 6);
 
             if (!memcmp(settings_magic, &settings_local, 4)) {
-                // TODO: handle version changes here!
-
                 driver_read_slot(((uint8_t*) &settings_local) + 6, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 6, sizeof(settings_local) - 6);
                 settings_found = true;
                 break;
@@ -91,8 +92,21 @@ void settings_load(void) {
         settings_reset();
     } else {
         // version migration
+        if (settings_local.version > SETTINGS_VERSION) {
+        	ui_show();
+            ui_dialog_run(0, 0, LK_DIALOG_SETTINGS_TOO_NEW, LK_DIALOG_OK);
+            settings_reset();
+            return;
+        }
+
         if (settings_local.version < 1) {
             settings_local.color_theme = 0;
+        }
+        if (settings_local.version < 2) {
+            for (uint8_t i = 0; i < GAME_SLOTS; i++) {
+                settings_local.slot_name[i][0] = 0;
+                settings_local.slot_name[i][1] = 0;
+            }
         }
 
         settings_local.version = SETTINGS_VERSION;

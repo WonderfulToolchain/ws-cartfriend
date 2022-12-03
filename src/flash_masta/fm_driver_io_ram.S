@@ -105,6 +105,11 @@ driver_launch_slot_restore:
 	mov [0x56], ax
 	mov ax, [0x2000]
 
+	mov ax, 0
+	mov ds, ax
+	mov es, ax
+	mov ss, ax
+
 	// fly me to the moon
 	jmp 0xFFFF,0x0000
 driver_launch_slot_end:
@@ -317,7 +322,7 @@ dws_driver_flash_busyloop_until_done:
 	// stop bypass
 	mov byte ptr es:[bx], 0x90
 	mov byte ptr es:[bx], 0x00
-	
+
 	pop	bp
 	pop	es
 	pop	ds
