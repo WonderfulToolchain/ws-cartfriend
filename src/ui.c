@@ -62,12 +62,12 @@ static const uint16_t __far theme_colorways[UI_THEME_COUNT][10] = {
         RGB(15, 14, 13), // Background color (Screen 1)
         RGB(4, 3, 1), // Foreground color (Screen 1)
         RGB(12, 11, 10), // Foreground color (Screen 1, light text)
-        RGB(7, 6, 6), // Background color (Screen 1, dialog open)
-        RGB(6, 5, 5), // Foreground color (Screen 1, dialog open)
+        RGB(8, 7, 7), // Background color (Screen 1, dialog open)
+        RGB(7, 6, 6), // Foreground color (Screen 1, dialog open)
         RGB(5, 3, 6), // Background color (Bar)
         RGB(12, 9, 11), // Foreground color (Bar)
-        RGB(14, 12, 15), // Background color (Dialog)
-        RGB(3, 1, 4), // Foreground color (Dialog)
+        RGB(14, 13, 15), // Background color (Dialog)
+        RGB(3, 2, 4), // Foreground color (Dialog)
         RGB(5, 3, 11), // Foreground color (Progress Bar)
     },
 };

@@ -27,10 +27,15 @@
 	.arch	i186
 	.code16
 	.intel_syntax noprefix
-	.global launch_sram_asm
+	.global launch_ram_asm
 
-launch_sram_asm:
+launch_ram_asm:
 	cli
+
+	mov si, 0x2000
+	mov byte ptr [si], 0xEA 
+	mov [si+1], ax
+	mov [si+3], dx
 
 	xor ax, ax
 	mov ds, ax
@@ -47,8 +52,8 @@ launch_sram_asm:
 	mov cx, 0x1000
 	rep stosw
 
-	mov di, 0x2070
-	mov cx, 0x0FC8
+	mov di, 0x2008
+	mov cx, 0x0FFC
 	rep stosw
 
 	// restore register state
@@ -83,5 +88,4 @@ launch_sram_asm:
 	mov ax, [0x2070]
 
 	// fly me to the moon
-	jmp 0x1000,0x0000
-	.align 2
+	jmp 0x0000,0x2000

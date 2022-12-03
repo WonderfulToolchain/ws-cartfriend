@@ -58,7 +58,7 @@ void settings_reset(void) {
         settings_local.sram_slot_mapping[sram_slot++] = 0xFF;
     }
     settings_local.active_sram_slot = SRAM_SLOT_FIRST_BOOT;
-    settings_local.color_theme = 0;
+    settings_local.color_theme = 0x02;
 
     settings_changed = true;
     settings_slot = MAX_SETTINGS_SLOT;

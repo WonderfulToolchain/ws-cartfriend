@@ -24,11 +24,14 @@
 #include "ui.h"
 #include "util.h"
 #include "xmodem.h"
+#include "../res/wsmonitor.h"
 
 #define MENU_TOOL_SRAMCODE_XM 0
+#define MENU_TOOL_WSMONITOR 1
 
 static uint16_t __far ui_tool_lks[] = {
-    LK_UI_TOOLS_SRAMCODE_XM
+    LK_UI_TOOLS_SRAMCODE_XM,
+    LK_UI_TOOLS_WSMONITOR
 };
 static void ui_tool_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     strncpy(buf, lang_keys[ui_tool_lks[entry_id]], buf_len);
@@ -67,7 +70,7 @@ static void ui_tool_sramcode_xm() {
             uint8_t result = xmodem_recv_block(sram_ptr);
             switch (result) {
                 case XMODEM_COMPLETE:
-                    launch_sram();
+                    launch_ram(MK_FP(0x1000, 0x0000));
                     break;
                 case XMODEM_SELF_CANCEL:
                 case XMODEM_CANCEL:
@@ -99,6 +102,7 @@ void ui_tools(void) {
     uint8_t menu_list[16];
     uint8_t i = 0;
     if ((_CS & 0xF000) != 0x1000) menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
+    menu_list[i++] = MENU_TOOL_WSMONITOR;
     menu_list[i++] = MENU_ENTRY_END;
 
     ui_menu_state_t menu = {
@@ -107,9 +111,10 @@ void ui_tools(void) {
         .flags = 0
     };
     ui_menu_init(&menu);
-    
+
     uint16_t result = ui_menu_select(&menu);
     switch (result) {
         case MENU_TOOL_SRAMCODE_XM: ui_tool_sramcode_xm(); break;
+        case MENU_TOOL_WSMONITOR: launch_ram(_wsmonitor_bin); break;
     }
 }

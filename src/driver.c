@@ -59,11 +59,11 @@ void launch_slot(uint16_t slot, uint16_t bank) {
     driver_launch_slot(0, slot, bank);
 }
 
-extern void launch_sram_asm(void);
+extern void launch_ram_asm(const void __far *ptr);
 
-void launch_sram(void) {
+void launch_ram(const void __far *ptr) {
     settings_save();
 
     clear_registers();
-    launch_sram_asm();
+    launch_ram_asm(ptr);
 }

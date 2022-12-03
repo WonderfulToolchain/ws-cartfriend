@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <ws.h>
+#include "input.h"
 #include "lang.h"
 #include "ui.h"
 #include "util.h"
@@ -70,10 +71,30 @@ void ui_about(void) {
     while (ui_poll_events()) {
         wait_for_vblank();
 
-        rotX += 3;
-        rotY += 7;
-        rotZ += 5;
-        offX += 3;
+        if (input_held & KEY_UP) {
+            rotY -= 9;
+        }
+        if (input_held & KEY_DOWN) {
+            rotY += 9;
+        }
+        if (input_held & KEY_LEFT) {
+            rotX -= 9;
+        }
+        if (input_held & KEY_RIGHT) {
+            rotX += 9;
+        }
+        if (input_held & KEY_A) {
+            rotZ += 9;
+        }
+        if (input_held & KEY_B) {
+            rotZ -= 9;
+        }
+        if (!(input_held & (KEY_UP | KEY_DOWN | KEY_LEFT | KEY_RIGHT | KEY_A | KEY_B))) {
+            rotX += 3;
+            rotY += 7;
+            rotZ += 5;
+            offX += 1;
+        }
 
         int16_t sinRX = sin(rotX >> 2);
         int16_t cosRX = cos(rotX >> 2);
@@ -81,7 +102,7 @@ void ui_about(void) {
         int16_t cosRY = cos(rotY >> 2);
         int16_t sinRZ = sin(rotZ >> 2);
         int16_t cosRZ = cos(rotZ >> 2);
-        int16_t sinOX = sin(offX >> 1);
+        int16_t sinOX = sin(offX);
         int16_t x, y, z;
 
         for (uint8_t i = 0; i < 8; i++) {
@@ -116,7 +137,7 @@ void ui_about(void) {
             points3D[i][1] = (points3D[i][1] * z) >> 7;
             SPRITE_TABLE[(i << 2)] = (z < 118) ? 182 : ((z < 140) ? 7 : 181);
             SPRITE_TABLE[(i << 2) + 2] = (points3D[i][1] >> 2) + 65;
-            SPRITE_TABLE[(i << 2) + 3] = (points3D[i][0] >> 2) + (112 + (sinOX >> 2));
+            SPRITE_TABLE[(i << 2) + 3] = (points3D[i][0] >> 2) + (112 + (sinOX >> 1));
         }
         outportw(IO_DISPLAY_CTRL, inportw(IO_DISPLAY_CTRL) | DISPLAY_SPR_ENABLE);
     }

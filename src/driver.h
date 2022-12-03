@@ -37,4 +37,4 @@ uint8_t driver_get_launch_slot(void);
 bool driver_supports_slots(void);
 
 void launch_slot(uint16_t slot, uint16_t bank); // unlocks automatically
-void launch_sram(void);
+void launch_ram(const void __far* ptr);
