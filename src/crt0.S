@@ -35,7 +35,18 @@ _ivt:
 _start:
 	cli
 
-	// CartFriend start: preserve state
+	// store correct state of AX and DS in a screen LUT
+	// we need to initialize DS to access RAM, but we want to preserve it
+	out	0x20, ax
+	mov	ax, ds
+	out	0x22, ax
+
+	// initialize DS to 0x0000
+	mov	ax, 0x0000
+	mov	ds, ax
+	
+	// preserve registers in RAM
+	in	ax, 0x20
 	mov	[0x40], ax
 	mov	[0x42], bx
 	mov	[0x44], cx
@@ -45,19 +56,20 @@ _start:
 	mov	[0x4C], si
 	mov	[0x4E], di
 	// CS is known
-	// DS should be known
-	mov	[0x50], es
-	mov	[0x52], ss
+	in	ax, 0x22
+	mov	[0x50], ax
+	mov	[0x52], es
+	mov	[0x54], ss
 
 	// init ES/SS/SP here so we can PUSHF
-	mov	ax, 0x00
+	mov	ax, 0x0000
 	mov	es, ax
 	mov	ss, ax
 	mov	sp, offset "__eheap"
 
 	pushf
 	pop ax
-	mov	[0x54], ax
+	mov	[0x56], ax
 
 	// CartFriend end
 

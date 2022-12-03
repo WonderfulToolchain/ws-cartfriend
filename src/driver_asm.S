@@ -32,10 +32,15 @@
 launch_ram_asm:
 	cli
 
-	mov si, 0x2000
+	mov si, 0x2004
 	mov byte ptr [si], 0xEA 
 	mov [si+1], ax
 	mov [si+3], dx
+
+	mov ax, [0x40]
+	mov [0x2000], ax
+	mov ax, [0x50]
+	mov [0x2002], ax
 
 	xor ax, ax
 	mov ds, ax
@@ -46,14 +51,16 @@ launch_ram_asm:
 	mov [0x42], ax
 	mov	dx, [0x46]
 	mov [0x46], ax
+	mov	si, [0x4C]
+	mov [0x4C], ax
 
 	// clear (almost) all memory we can (rep stosw in relocated part)
 	mov di, 0
 	mov cx, 0x1000
 	rep stosw
 
-	mov di, 0x2008
-	mov cx, 0x0FFC
+	mov di, 0x200A
+	mov cx, 0x0FFB
 	rep stosw
 
 	// restore register state
@@ -61,31 +68,27 @@ launch_ram_asm:
 	push cx
 	popf
 	push ax // clear stack area we just used
-	mov	ax, [0x40]
 	mov	cx, [0x44]
 	mov	sp, [0x48]
 	mov	bp, [0x4A]
-	mov	si, [0x4C]
 	mov	di, [0x4E]
-	mov	ds, [0x50]
 	mov	es, [0x52]
 	mov	ss, [0x54]
 
 	// take clearing a bit more seriously
-	mov [0x2070], ax
 	mov ax, 0
-	// mov [0x42], ax above
+	mov [0x40], ax
 	mov [0x44], ax
-	// mov [0x46], ax above
 	mov [0x48], ax
 	mov [0x4A], ax
-	mov [0x4C], ax
 	mov [0x4E], ax
 	mov [0x50], ax
 	mov [0x52], ax
 	mov [0x54], ax
 	mov [0x56], ax
-	mov ax, [0x2070]
+	mov ax, [0x2002]
+	mov ds, ax
+	mov ax, [0x2000]
 
 	// fly me to the moon
-	jmp 0x0000,0x2000
+	jmp 0x0000,0x2004

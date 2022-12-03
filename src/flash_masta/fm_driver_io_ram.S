@@ -37,6 +37,11 @@
 	.section .text
 	.align 2
 driver_launch_slot_relocated:
+	mov ax, [0x40]
+	mov [0x2000], ax
+	mov ax, [0x50]
+	mov [0x2002], ax
+
 	// initialize RAM banks
 	mov al, 0xFF
 	out 0xC1, al
@@ -54,10 +59,10 @@ driver_launch_slot_relocated:
 	out 0xCD, al
 	xor ax, ax
 	out 0xCC, al
-	// the memory clears will take most of the time
-	mov cx, 4500
-_dls_loop:
-	loop _dls_loop
+	// the memory clears will take the necessary time
+	mov di, 0x2200
+	mov cx, 0xF00
+	rep stosw
 
 	// clear (almost) all memory we can (rep stosw in relocated part)
 	mov di, ax
@@ -82,20 +87,18 @@ _dls_loop:
 
 driver_launch_slot_restore:
 	// restore register state
-	mov cx, [0x54]
+	mov cx, [0x56]
 	push cx
 	popf
 	push ax // clear stack area we just used
-	mov	ax, [0x40]
 	mov	cx, [0x44]
 	mov	sp, [0x48]
 	mov	bp, [0x4A]
 	mov	di, [0x4E]
-	mov	es, [0x50]
-	mov	ss, [0x52]
+	mov	es, [0x52]
+	mov	ss, [0x54]
 
 	// take clearing a bit more seriously
-	mov [0x2000], ax
 	mov ax, 0
 	mov [0x40], ax
 	mov [0x44], ax
@@ -105,6 +108,9 @@ driver_launch_slot_restore:
 	mov [0x50], ax
 	mov [0x52], ax
 	mov [0x54], ax
+	mov [0x56], ax
+	mov ax, [0x2002]
+	mov ds, ax
 	mov ax, [0x2000]
 
 	// fly me to the moon
@@ -129,7 +135,7 @@ driver_launch_slot:
 	mov es, ax
 
 	mov di, 0x2000
-	mov cx, 0x1000
+	mov cx, 0x100
 	rep stosw
 
 	mov di, 0x2000
@@ -143,15 +149,8 @@ driver_launch_slot:
 	mov ds, ax
 
 	mov byte ptr [_driver_current_slot], 0xFF
-	call _driver_switch_slot
-
-	// reset the RTC
-	call _rtc_wait_ready
-	mov al, 0x10
-	out 0xCA, al
-	call _rtc_wait_ready
-	xor ax, ax
-	jmp 0x2000
+	push 0x2000
+	jmp _driver_switch_slot
 
 _rtc_wait_ready:
 	push ax

@@ -26,6 +26,12 @@ static void clear_registers(void) {
     // wait for vblank, disable display, reset some registers
     wait_for_vblank();
     cpu_irq_disable();
+
+    if (ws_system_color_active()) {
+        memset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
+        ws_mode_set(WS_MODE_MONO);
+    }
+
     outportw(IO_DISPLAY_CTRL, 0);
     outportb(IO_LCD_SEG, 0);
     outportb(IO_SPR_BASE, 0);
@@ -39,12 +45,6 @@ static void clear_registers(void) {
     outportb(IO_HWINT_ENABLE, 0);
     outportb(IO_INT_NMI_CTRL, 0);
     outportb(IO_KEY_SCAN, 0x40);
-
-    if (ws_system_color_active()) {
-        memset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
-        ws_mode_set(WS_MODE_MONO);
-    }
-
     outportb(IO_SCR_BASE, 0x26);
 
     outportb(IO_HWINT_ACK, 0xFF);
