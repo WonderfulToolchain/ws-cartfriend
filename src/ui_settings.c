@@ -47,7 +47,8 @@ static uint16_t __far ui_opt_lks[] = {
 
 static uint16_t __far ui_theme_color_lks[] = {
     LK_THEME_C0,
-    LK_THEME_C1
+    LK_THEME_C1,
+    LK_THEME_C2
 };
 
 static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {

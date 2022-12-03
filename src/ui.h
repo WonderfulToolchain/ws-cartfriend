@@ -49,7 +49,7 @@ __attribute__((format(printf, 5, 6))) void ui_printf(bool alt_screen, uint8_t x,
 __attribute__((format(printf, 4, 5))) void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...);
 __attribute__((format(printf, 5, 6))) void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
 
-#define UI_THEME_COUNT 2
+#define UI_THEME_COUNT 3
 void ui_update_theme(uint8_t current_theme);
 
 #define UI_GLYPH_LOW_BATTERY 8

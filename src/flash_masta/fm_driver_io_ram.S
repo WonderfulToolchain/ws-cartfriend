@@ -54,6 +54,10 @@ driver_launch_slot_relocated:
 	out 0xCD, al
 	xor ax, ax
 	out 0xCC, al
+	// the memory clears will take most of the time
+	mov cx, 4500
+_dls_loop:
+	loop _dls_loop
 
 	// clear (almost) all memory we can (rep stosw in relocated part)
 	mov di, ax
@@ -72,13 +76,13 @@ driver_launch_slot_relocated:
 	mov	si, [0x4C]
 	mov [0x4C], ax
 
-	mov di, offset ((driver_launch_slot_end + 1 - driver_launch_slot_relocated + 0x2000) & 0xFFFE)
-	mov cx, offset ((0x4000 >> 1) - ((driver_launch_slot_end + 1 - driver_launch_slot_relocated + 0x2000) >> 1))
-	rep stosw
+	// mov di, offset ((driver_launch_slot_end + 1 - driver_launch_slot_relocated + 0x2000) & 0xFFFE)
+	// mov cx, offset ((0x4000 >> 1) - ((driver_launch_slot_end + 1 - driver_launch_slot_relocated + 0x2000) >> 1))
+	// rep stosw
 
 driver_launch_slot_restore:
 	// restore register state
-	mov cx, [0x56]
+	mov cx, [0x54]
 	push cx
 	popf
 	push ax // clear stack area we just used
@@ -87,9 +91,8 @@ driver_launch_slot_restore:
 	mov	sp, [0x48]
 	mov	bp, [0x4A]
 	mov	di, [0x4E]
-	mov	ds, [0x50]
-	mov	es, [0x52]
-	mov	ss, [0x54]
+	mov	es, [0x50]
+	mov	ss, [0x52]
 
 	// take clearing a bit more seriously
 	mov [0x2000], ax
@@ -102,13 +105,7 @@ driver_launch_slot_restore:
 	mov [0x50], ax
 	mov [0x52], ax
 	mov [0x54], ax
-	mov [0x56], ax
 	mov ax, [0x2000]
-
-	mov ax, 0
-	mov ds, ax
-	mov es, ax
-	mov ss, ax
 
 	// fly me to the moon
 	jmp 0xFFFF,0x0000
@@ -128,10 +125,15 @@ driver_launch_slot:
 	//
 	mov ds, ax
 	mov si, offset driver_launch_slot_relocated
-	mov di, 0x2000
-	mov cx, offset ((driver_launch_slot_end - driver_launch_slot_relocated + 1) >> 1)
 	xor ax, ax
 	mov es, ax
+
+	mov di, 0x2000
+	mov cx, 0x1000
+	rep stosw
+
+	mov di, 0x2000
+	mov cx, offset ((driver_launch_slot_end - driver_launch_slot_relocated + 1) >> 1)
 	rep movsw
 	
 	pop cx
@@ -140,7 +142,6 @@ driver_launch_slot:
 	// xor ax, ax - done above
 	mov ds, ax
 
-	// switch ROM slot, return to 0x2000
 	mov byte ptr [_driver_current_slot], 0xFF
 	call _driver_switch_slot
 
@@ -169,14 +170,6 @@ _rtc_write_data_al:
 	out 0xCB, al
 	ret
 
-_driver_change_loop:
-	push cx
-	mov cx, 4600 // ~1.5ms
-_dc_loop2:
-	loop _dc_loop2
-	pop cx
-	ret
-
 // dx = slot
 _driver_switch_slot:
 	push ax
@@ -200,7 +193,12 @@ _driver_switch_slot1:
 	call _rtc_write_data_al
 	call _rtc_write_data_al
 	call _rtc_wait_ready
-	call _driver_change_loop
+_driver_change_loop:
+	mov ax, cx
+	mov cx, 9200 // ~3ms
+_dc_loop2:
+	loop _dc_loop2
+	mov cx, ax
 
 _driver_switch_slot_equal:
 	pop ax

@@ -45,9 +45,9 @@ _start:
 	mov	[0x4C], si
 	mov	[0x4E], di
 	// CS is known
-	mov	[0x50], ds
-	mov	[0x52], es
-	mov	[0x54], ss
+	// DS should be known
+	mov	[0x50], es
+	mov	[0x52], ss
 
 	// init ES/SS/SP here so we can PUSHF
 	mov	ax, 0x00
@@ -57,7 +57,7 @@ _start:
 
 	pushf
 	pop ax
-	mov	[0x56], ax
+	mov	[0x54], ax
 
 	// CartFriend end
 

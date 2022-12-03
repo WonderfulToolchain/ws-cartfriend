@@ -33,23 +33,43 @@
 const char __far* const __far* lang_keys;
 uint8_t ui_low_battery_flag;
 
-static const uint16_t __far theme_colorways[UI_THEME_COUNT][6] = {
+static const uint16_t __far theme_colorways[UI_THEME_COUNT][10] = {
     { // Light
-        RGB(0, 0, 0),
-        RGB(4, 4, 4),
-        RGB(6, 6, 6),
-        RGB(8, 8, 8),
-        RGB(11, 11, 11),
-        RGB(15, 15, 15)
+        RGB(15, 15, 15), // Background color (Screen 1)
+        RGB(0, 0, 0), // Foreground color (Screen 1)
+        RGB(11, 11, 11), // Foreground color (Screen 1, light text)
+        RGB(8, 8, 8), // Background color (Screen 1, dialog open)
+        RGB(6, 6, 6), // Foreground color (Screen 1, dialog open)
+        RGB(11, 11, 11), // Background color (Bar)
+        RGB(4, 4, 4), // Foreground color (Bar)
+        RGB(15, 15, 15), // Background color (Dialog)
+        RGB(0, 0, 0), // Foreground color (Dialog)
+        RGB(15, 0, 0), // Foreground color (Progress Bar)
     },
     { // Dark
-        RGB(15, 15, 15),
-        RGB(11, 11, 11),
-        RGB(8, 8, 8),
-        RGB(6, 6, 6),
-        RGB(4, 4, 4),
-        RGB(0, 0, 0)
-    }
+        RGB(0, 0, 0), // Background color (Screen 1)
+        RGB(15, 15, 15), // Foreground color (Screen 1)
+        RGB(4, 4, 4), // Foreground color (Screen 1, light text)
+        RGB(6, 6, 6), // Background color (Screen 1, dialog open)
+        RGB(8, 8, 8), // Foreground color (Screen 1, dialog open)
+        RGB(4, 4, 4), // Background color (Bar)
+        RGB(11, 11, 11), // Foreground color (Bar)
+        RGB(0, 0, 0), // Background color (Dialog)
+        RGB(15, 15, 15), // Foreground color (Dialog)
+        RGB(15, 0, 0), // Foreground color (Progress Bar)
+    },
+    { // Crystal
+        RGB(15, 14, 13), // Background color (Screen 1)
+        RGB(4, 3, 1), // Foreground color (Screen 1)
+        RGB(12, 11, 10), // Foreground color (Screen 1, light text)
+        RGB(7, 6, 6), // Background color (Screen 1, dialog open)
+        RGB(6, 5, 5), // Foreground color (Screen 1, dialog open)
+        RGB(5, 3, 6), // Background color (Bar)
+        RGB(12, 9, 11), // Foreground color (Bar)
+        RGB(14, 12, 15), // Background color (Dialog)
+        RGB(3, 1, 4), // Foreground color (Dialog)
+        RGB(5, 3, 11), // Foreground color (Progress Bar)
+    },
 };
 
 static uint8_t scroll_y;
@@ -58,24 +78,24 @@ bool ui_dialog_open;
 void ui_update_theme(uint8_t current_theme) {
     wait_for_vblank();
     if (ws_system_color_active()) {
-        const uint16_t __far* colorway = theme_colorways[current_theme & 7];
-        MEM_COLOR_PALETTE(0)[0] = colorway[ui_dialog_open ? 3 : 5];
-        MEM_COLOR_PALETTE(0)[1] = colorway[ui_dialog_open ? 2 : 0];
-        MEM_COLOR_PALETTE(1)[0] = colorway[ui_dialog_open ? 2 : 0];
-        MEM_COLOR_PALETTE(1)[1] = colorway[ui_dialog_open ? 3 : 5];
-        MEM_COLOR_PALETTE(2)[0] = colorway[4];
-        MEM_COLOR_PALETTE(2)[1] = colorway[1];
-        MEM_COLOR_PALETTE(3)[0] = colorway[1];
-        MEM_COLOR_PALETTE(3)[1] = colorway[4];
-        MEM_COLOR_PALETTE(12)[1] = colorway[0];
-        MEM_COLOR_PALETTE(8)[0] = colorway[5];
-        MEM_COLOR_PALETTE(8)[1] = colorway[0];
-        MEM_COLOR_PALETTE(9)[0] = colorway[0];
-        MEM_COLOR_PALETTE(9)[1] = colorway[5];
-        MEM_COLOR_PALETTE(10)[0] = colorway[5];
-        MEM_COLOR_PALETTE(10)[1] = RGB(15, 0, 0);
-        MEM_COLOR_PALETTE(11)[0] = colorway[ui_dialog_open ? 3 : 5];
-        MEM_COLOR_PALETTE(11)[1] = colorway[ui_dialog_open ? 2 : 4];
+        const uint16_t __far* colorway = theme_colorways[current_theme % UI_THEME_COUNT];
+        MEM_COLOR_PALETTE(0)[0] = colorway[ui_dialog_open ? 3 : 0];
+        MEM_COLOR_PALETTE(0)[1] = colorway[ui_dialog_open ? 4 : 1];
+        MEM_COLOR_PALETTE(1)[0] = MEM_COLOR_PALETTE(0)[1];
+        MEM_COLOR_PALETTE(1)[1] = MEM_COLOR_PALETTE(0)[0];
+        MEM_COLOR_PALETTE(2)[0] = colorway[5];
+        MEM_COLOR_PALETTE(2)[1] = colorway[6];
+        MEM_COLOR_PALETTE(3)[0] = MEM_COLOR_PALETTE(2)[1];
+        MEM_COLOR_PALETTE(3)[1] = MEM_COLOR_PALETTE(2)[0];
+        MEM_COLOR_PALETTE(12)[1] = colorway[1];
+        MEM_COLOR_PALETTE(8)[0] = colorway[7];
+        MEM_COLOR_PALETTE(8)[1] = colorway[8];
+        MEM_COLOR_PALETTE(9)[0] = MEM_COLOR_PALETTE(8)[1];
+        MEM_COLOR_PALETTE(9)[1] = MEM_COLOR_PALETTE(8)[0];
+        MEM_COLOR_PALETTE(10)[0] = MEM_COLOR_PALETTE(0)[0];
+        MEM_COLOR_PALETTE(10)[1] = colorway[9];
+        MEM_COLOR_PALETTE(11)[0] = MEM_COLOR_PALETTE(0)[0];
+        MEM_COLOR_PALETTE(11)[1] = colorway[ui_dialog_open ? 4 : 2];
     } else {
         if (current_theme & 0x80) {
             // dark mode
