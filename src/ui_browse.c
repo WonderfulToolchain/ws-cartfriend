@@ -159,6 +159,10 @@ void ui_browse(void) {
                 }
 
                 sram_switch_to_slot(sram_slot);
+            } else {
+                if (settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
+                    settings_local.active_sram_slot = SRAM_SLOT_NONE;
+                }
             }
 
             // does the game leave IEEPROM unlocked?
@@ -182,6 +186,7 @@ void ui_browse(void) {
                         settings_local.slot_name[result][0] = 0x20;
                         strncpy((char*) (settings_local.slot_name[result] + 1), (char*) menu_list, 23);
                     }
+                    settings_mark_changed();
                 }
             }
         }
