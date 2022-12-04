@@ -78,7 +78,7 @@ bool ui_dialog_open;
 void ui_update_theme(uint8_t current_theme) {
     wait_for_vblank();
     if (ws_system_color_active()) {
-        const uint16_t __far* colorway = theme_colorways[current_theme % UI_THEME_COUNT];
+        const uint16_t __far* colorway = theme_colorways[(current_theme & 0x7F) % UI_THEME_COUNT];
         MEM_COLOR_PALETTE(0)[0] = colorway[ui_dialog_open ? 3 : 0];
         MEM_COLOR_PALETTE(0)[1] = colorway[ui_dialog_open ? 4 : 1];
         MEM_COLOR_PALETTE(1)[0] = MEM_COLOR_PALETTE(0)[1];
