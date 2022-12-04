@@ -42,10 +42,12 @@ static void ui_browse_menu_build_line(uint8_t entry_id, void *userdata, char *bu
     char buf_name[28];
     uint8_t *cart_metadata = (uint8_t*) userdata;
 
-    if (entry_id < GAME_SLOTS) {
-        if (settings_local.slot_name[entry_id][0] >= 0x20) {
+    if (entry_id < 128) {
+        if (entry_id < GAME_SLOTS && settings_local.slot_name[entry_id][0] >= 0x20) {
             memcpy(buf_name, settings_local.slot_name[entry_id] + 1, 23);
             buf_name[23] = 0;
+        } else if (settings_local.flags1 & SETT_FLAGS1_HIDE_SLOT_IDS) {
+            buf_name[0] = 0;
         } else {
             npf_snprintf(buf_name, sizeof(buf_name), lang_keys[LK_UI_BROWSE_SLOT_DEFAULT_NAME],
                 (uint16_t) cart_metadata[(entry_id*5) + 4],
@@ -53,7 +55,9 @@ static void ui_browse_menu_build_line(uint8_t entry_id, void *userdata, char *bu
                 (uint16_t) cart_metadata[(entry_id*5) + 2], (uint16_t) cart_metadata[(entry_id*5) + 3]
             );
         }
-        npf_snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_SLOT], (uint16_t) (entry_id + 1), ' ', ((const char __far*) buf_name));
+        uint8_t sub_slot = entry_id >> 4;
+        entry_id &= 0xF;
+        npf_snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_SLOT], (uint16_t) (entry_id + 1), sub_slot == 0 ? ' ' : ('A' + sub_slot - 1), ((const char __far*) buf_name));
     }
 }
 
@@ -67,8 +71,27 @@ static void ui_browse_submenu_build_line(uint8_t entry_id, void *userdata, char 
     strncpy(buf, lang_keys[browse_sub_lks[entry_id]], buf_len);
 }
 
-static bool ui_read_rom_header(void *buffer, uint8_t slot) {
-    return driver_read_slot(buffer, slot, 0xFF, 0xFFF0, 16);
+static bool ui_read_rom_header(void *buffer, uint8_t slot, uint8_t bank) {
+    return driver_read_slot(buffer, slot, bank, 0xFFF0, 16);
+}
+
+static inline bool ui_read_rom_header_from_entry(void *buffer, uint8_t entry_id) {
+    return ui_read_rom_header(buffer, entry_id & 0x0F, 0xFF - (entry_id & 0xF0));
+}
+
+static bool is_valid_rom_header(uint8_t *buffer) {
+    // is the first byte a valid jump call?
+    if (buffer[0] == 0xEA || buffer[0] == 0x9A) {
+        // are maintenance bits not set?
+        if (!(buffer[5] & 0x0F)) {
+            // is the target plausibly outside of internal RAM?
+            uint16_t dest_high = *((uint16_t*) (buffer + 3));
+            if (dest_high != 0xFFFF && dest_high != 0x0000) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 static uint8_t iterate_carts(uint8_t *menu_list, uint8_t *cart_metadata, uint8_t i) {
@@ -89,21 +112,35 @@ static uint8_t iterate_carts(uint8_t *menu_list, uint8_t *cart_metadata, uint8_t
             }
         }
 
-        memset(buffer, 0xFF, sizeof(buffer));
-        if (ui_read_rom_header(buffer, slot)) {
-            // is the first byte a valid jump call?
-            if (buffer[0] == 0xEA || buffer[0] == 0x9A) {
-                // is the target plausibly outside of internal RAM?
-                uint16_t dest_high = *((uint16_t*) (buffer + 3));
-                if (dest_high != 0xFFFF && dest_high != 0x0000) {
-                    cart_metadata[(slot*5)] = buffer[0x08];
-                    cart_metadata[(slot*5)+1] = buffer[0x09];
-                    cart_metadata[(slot*5)+2] = buffer[0x0F];
-                    cart_metadata[(slot*5)+3] = buffer[0x0E];
-                    cart_metadata[(slot*5)+4] = buffer[0x06];
-                    menu_list[i++] = slot;
+        int16_t bank = 0xFF;
+        while (bank >= 0x80) {
+            memset(buffer, 0xFF, sizeof(buffer));
+            if (ui_read_rom_header(buffer, slot, bank)) {
+                if (is_valid_rom_header(buffer)) {
+                    uint8_t entry_id = slot | ((bank & 0xF0) ^ 0xF0);
+                    if (!(settings_local.flags1 & SETT_FLAGS1_HIDE_SLOT_IDS)) {
+                        uint16_t j = entry_id*5;
+                        cart_metadata[j++] = buffer[0x08];
+                        cart_metadata[j++] = buffer[0x09];
+                        cart_metadata[j++] = buffer[0x0F];
+                        cart_metadata[j++] = buffer[0x0E];
+                        cart_metadata[j] = buffer[0x06];
+                    }
+                    menu_list[i++] = entry_id;
+
+                    if (settings_local.slot_type[slot] == SLOT_TYPE_MULTILINEAR_SOFT) {
+                        if (buffer[10] < sizeof(rom_size_table)) {
+                            uint16_t size_banks = ((uint16_t) rom_size_table[buffer[10]]) * 2;
+                            if (size_banks < 16) size_banks = 16;
+                            bank -= size_banks;
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
                 }
             }
+            break;
         }
     }
     driver_lock();
@@ -116,7 +153,7 @@ void ui_browse_info(uint8_t slot) {
     uint8_t rom_header[16];
 
     ui_reset_main_screen();
-    ui_read_rom_header(rom_header, slot);
+    ui_read_rom_header_from_entry(rom_header, slot);
     input_wait_clear();
 
     npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ID_VAL],
@@ -215,7 +252,7 @@ void ui_browse(void) {
 
     uint16_t result = ui_menu_select(&menu);
     uint16_t subaction = 0;
-    if ((result & 0xFF) < 0xF0) {
+    if ((result & 0xFF) < 128) {
         if ((result & 0xFF00) == MENU_ACTION_B) {
             ui_popup_menu_state_t popup_menu = {
                 .list = menu_list,
@@ -236,7 +273,7 @@ void ui_browse(void) {
             driver_unlock();
 
             memset(menu_list, 0xFF, 16);
-            ui_read_rom_header(menu_list, result);
+            ui_read_rom_header_from_entry(menu_list, result);
 
             // does the game use save data?
             if (menu_list[0x0B] != 0 && _CS >= 0x2000) {
@@ -277,7 +314,7 @@ void ui_browse(void) {
             }
 
             input_wait_clear();
-            launch_slot(result, 0xFF);
+            launch_slot(result & 0x0F, 0xFF - (result & 0xF0));
         } else if (subaction == BROWSE_SUB_INFO) {
             ui_browse_info(result);
         } else if (subaction == BROWSE_SUB_RENAME) {

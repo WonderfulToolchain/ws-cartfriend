@@ -26,7 +26,7 @@
 #define SLOT_TYPE_APPENDED_FILES 3 /* Tentative */
 #define SLOT_TYPE_UNUSED 0xFF
 
-#define SETTINGS_VERSION 2
+#define SETTINGS_VERSION 3
 
 #define SRAM_SLOT_ALL 0xFD
 #define SRAM_SLOT_FIRST_BOOT 0xFE
@@ -43,7 +43,11 @@ typedef struct __attribute__((packed)) {
 	uint8_t color_theme; // 39
 
 	uint8_t slot_name[GAME_SLOTS][24]; // 423
+
+	uint8_t flags1; // 424
 } settings_t;
+
+#define SETT_FLAGS1_HIDE_SLOT_IDS 0x01
 
 extern settings_t settings_local;
 extern bool settings_changed;

@@ -119,7 +119,7 @@ void sram_erase(uint8_t sram_slot) {
         .width = 27
     };
 
-    if (sram_slot == settings_local.active_sram_slot || sram_slot == SRAM_SLOT_NONE) {
+    if (sram_slot == SRAM_SLOT_NONE) {
         pbar.step_max = 128;
         ui_pbar_init(&pbar);
 

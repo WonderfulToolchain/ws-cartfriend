@@ -64,6 +64,31 @@ void settings_reset(void) {
     settings_slot = MAX_SETTINGS_SLOT;
 }
 
+static void settings_migrate(void) {
+    if (settings_local.version > SETTINGS_VERSION) {
+        ui_show();
+        ui_dialog_run(0, 0, LK_DIALOG_SETTINGS_TOO_NEW, LK_DIALOG_OK);
+        settings_reset();
+        return;
+    }
+
+    if (settings_local.version < 1) {
+        settings_local.color_theme = 0;
+    }
+    if (settings_local.version < 2) {
+        for (uint8_t i = 0; i < GAME_SLOTS; i++) {
+            settings_local.slot_name[i][0] = 0;
+            settings_local.slot_name[i][1] = 0;
+        }
+    }
+
+    if (settings_local.version < 3) {
+        settings_local.flags1 = 0;
+    }
+
+    settings_local.version = SETTINGS_VERSION;
+}
+
 void settings_load(void) {
     settings_changed = false;
     bool settings_found = false;
@@ -91,25 +116,7 @@ void settings_load(void) {
     if (!settings_found) {
         settings_reset();
     } else {
-        // version migration
-        if (settings_local.version > SETTINGS_VERSION) {
-        	ui_show();
-            ui_dialog_run(0, 0, LK_DIALOG_SETTINGS_TOO_NEW, LK_DIALOG_OK);
-            settings_reset();
-            return;
-        }
-
-        if (settings_local.version < 1) {
-            settings_local.color_theme = 0;
-        }
-        if (settings_local.version < 2) {
-            for (uint8_t i = 0; i < GAME_SLOTS; i++) {
-                settings_local.slot_name[i][0] = 0;
-                settings_local.slot_name[i][1] = 0;
-            }
-        }
-
-        settings_local.version = SETTINGS_VERSION;
+        settings_migrate();
     }
 }
 
@@ -130,7 +137,12 @@ void settings_save(void) {
         settings_slot++;
     }
 
+    uint8_t active_sram_slot = settings_local.active_sram_slot;
+    if (active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
+        settings_local.active_sram_slot = SRAM_SLOT_NONE;
+    }
     driver_write_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), settings_slot << 10, sizeof(settings_local));
+    settings_local.active_sram_slot = active_sram_slot;
 
     ui_clear_work_indicator();
     settings_changed = false;
