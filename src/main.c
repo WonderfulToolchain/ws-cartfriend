@@ -56,11 +56,13 @@ void main(void) {
 	ws_hwint_enable(HWINT_VBLANK);
 	cpu_irq_enable();
 
+	settings_local.avr_cart_delay = DEFAULT_AVR_CART_DELAY;
+
 	ui_init();
 	driver_init();
 
 	settings_load();
-	ui_update_theme(settings_local.color_theme);
+	settings_refresh();
 	input_wait_clear(); // wait for input to calm down
 
 	ui_set_current_tab(UI_TAB_BROWSE);

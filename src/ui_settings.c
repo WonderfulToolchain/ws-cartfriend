@@ -30,11 +30,12 @@
 #define MENU_OPT_SAVEMAP 0
 #define MENU_OPT_SAVE 1
 #define MENU_OPT_SAVE_MANAGEMENT 2
-#define MENU_OPT_FORCECARTSRAM 3
 #define MENU_OPT_THEME 4
 #define MENU_OPT_SLOTMAP 5
 #define MENU_OPT_UNLOAD_SRAM 6
 #define MENU_OPT_HIDE_SLOT_IDS 7
+#define MENU_OPT_REVERTSETTINGS 8
+#define MENU_OPT_ADVANCED 9
 
 static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_SAVEMAP,
@@ -44,7 +45,9 @@ static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_THEME,
     LK_UI_SETTINGS_SLOTMAP,
     LK_UI_SETTINGS_UNLOAD_SRAM,
-    LK_UI_SETTINGS_HIDE_SLOT_IDS
+    LK_UI_SETTINGS_HIDE_SLOT_IDS,
+    LK_UI_SETTINGS_REVERT,
+    LK_UI_SETTINGS_ADVANCED
 };
 
 static uint16_t __far ui_theme_color_lks[] = {
@@ -58,10 +61,7 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
         npf_snprintf(buf, buf_len, lang_keys[settings_changed ? LK_MENU_MARKED : LK_MENU_UNMARKED], lang_keys[ui_opt_lks[entry_id]]);
     } else {
         strncpy(buf, lang_keys[ui_opt_lks[entry_id]], buf_len);
-        if (entry_id == MENU_OPT_FORCECARTSRAM) {
-            bool yes = settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT;
-            strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
-        } else if (entry_id == MENU_OPT_HIDE_SLOT_IDS) {
+        if (entry_id == MENU_OPT_HIDE_SLOT_IDS) {
             bool yes = settings_local.flags1 & SETT_FLAGS1_HIDE_SLOT_IDS;
             strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
         } else if (entry_id == MENU_OPT_THEME) {
@@ -72,11 +72,29 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
             }
         }
 
-        if (entry_id == MENU_OPT_SLOTMAP || entry_id == MENU_OPT_SAVEMAP || entry_id == MENU_OPT_SAVE_MANAGEMENT) {
+        if (entry_id == MENU_OPT_SLOTMAP || entry_id == MENU_OPT_SAVEMAP || entry_id == MENU_OPT_SAVE_MANAGEMENT || entry_id == MENU_OPT_ADVANCED) {
             buf_right[0] = '>';
             buf_right[1] = '>';
             buf_right[2] = 0;
         }
+    }
+}
+
+#define MENU_ADV_CART_AVR_DELAY 0
+#define MENU_ADV_FORCECARTSRAM 1
+
+static uint16_t __far ui_adv_lks[] = {
+    LK_UI_SETTINGS_CART_AVR_DELAY,
+    LK_UI_SETTINGS_FORCECARTSRAM
+};
+
+static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
+    strncpy(buf, lang_keys[ui_adv_lks[entry_id]], buf_len);
+    if (entry_id == MENU_ADV_FORCECARTSRAM) {
+        bool yes = settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT;
+        strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
+    } else if (entry_id == MENU_ADV_CART_AVR_DELAY) {
+        npf_snprintf(buf_right, buf_right_len, lang_keys[LK_UI_D_MS], (uint16_t) settings_local.avr_cart_delay);
     }
 }
 
@@ -152,6 +170,42 @@ static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, 
     }
 }
 
+static void ui_settings_advanced(uint8_t *menu_list) {
+    uint8_t i = 0;
+    menu_list[i++] = MENU_ADV_FORCECARTSRAM;
+    menu_list[i++] = MENU_ADV_CART_AVR_DELAY;
+    menu_list[i++] = MENU_ENTRY_END;
+
+    ui_menu_state_t menu = {
+        .list = menu_list,
+        .build_line_func = ui_adv_menu_build_line,
+        .flags = MENU_B_AS_BACK
+    };
+    ui_menu_init(&menu);
+
+Reselect:
+    ;
+    uint16_t result = ui_menu_select(&menu);
+
+    if (result == MENU_ADV_FORCECARTSRAM) {
+        if (settings_local.active_sram_slot != 0xFE) {
+            if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
+                settings_local.active_sram_slot = 0xFE;
+                settings_mark_changed();
+            }
+        }
+    } else if (result == MENU_ADV_CART_AVR_DELAY) {
+        settings_local.avr_cart_delay += 5;
+        if (settings_local.avr_cart_delay < MINIMUM_AVR_CART_DELAY) {
+            settings_local.avr_cart_delay = MINIMUM_AVR_CART_DELAY;
+        } else if (settings_local.avr_cart_delay > MAXIMUM_AVR_CART_DELAY) {
+            settings_local.avr_cart_delay = MINIMUM_AVR_CART_DELAY;
+        }
+        settings_mark_changed();
+        goto Reselect;
+    }
+}
+
 void ui_settings(void) {
     uint8_t menu_list[32];
     uint8_t i = 0;
@@ -167,10 +221,13 @@ void ui_settings(void) {
         if (settings_local.active_sram_slot < SRAM_SLOTS) {
             menu_list[i++] = MENU_OPT_UNLOAD_SRAM;
         }
-        menu_list[i++] = MENU_OPT_FORCECARTSRAM;
+        menu_list[i++] = MENU_OPT_ADVANCED;
         menu_list[i++] = MENU_ENTRY_DIVIDER;
     }
     menu_list[i++] = MENU_OPT_SAVE;
+    if (settings_changed) {
+        menu_list[i++] = MENU_OPT_REVERTSETTINGS;
+    }
     menu_list[i++] = MENU_ENTRY_END;
 
     ui_menu_state_t menu = {
@@ -244,13 +301,9 @@ Reselect:
     } else if (result == MENU_OPT_SAVE) {
         settings_save();
         goto Reselect;
-    } else if (result == MENU_OPT_FORCECARTSRAM) {
-        if (settings_local.active_sram_slot != 0xFE) {
-            if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
-                settings_local.active_sram_slot = 0xFE;
-                settings_mark_changed();
-            }
-        }
+    } else if (result == MENU_OPT_ADVANCED) {
+        ui_reset_main_screen();
+        ui_settings_advanced(menu_list);
     } else if (result == MENU_OPT_HIDE_SLOT_IDS) {
         settings_local.flags1 ^= SETT_FLAGS1_HIDE_SLOT_IDS;
         settings_mark_changed();
@@ -258,6 +311,11 @@ Reselect:
     } else if (result == MENU_OPT_UNLOAD_SRAM) {
         if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
             sram_switch_to_slot(0xFF);
+        }
+    } else if (result == MENU_OPT_REVERTSETTINGS) {
+        if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
+            settings_load();
+            settings_refresh();
         }
     } else if (result == MENU_OPT_SAVE_MANAGEMENT) {
         i = 0;

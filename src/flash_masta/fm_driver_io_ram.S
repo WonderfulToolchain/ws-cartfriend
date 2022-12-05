@@ -193,11 +193,16 @@ _driver_switch_slot1:
 	call _rtc_write_data_al
 	call _rtc_wait_ready
 _driver_change_loop:
+	push cx
+	mov ch, 0
+	mov cl, byte ptr [settings_local + 424]
 	mov ax, cx
-	mov cx, 9200 // ~3ms
+	shl cx, 2
+	add cx, ax
+	shl cx, 7
 _dc_loop2:
 	loop _dc_loop2
-	mov cx, ax
+	pop cx
 
 _driver_switch_slot_equal:
 	pop ax
@@ -274,10 +279,10 @@ _drs_no_byte:
 	call _driver_unswitch_slot_bank1
 	mov al, 1
 
-_drs_postamble:
 	pop	di
 	pop	si
 
+	call driver_slot_finish_error_check
 	ASM_PLATFORM_RET 0x4
 
 driver_write_slot:
@@ -327,7 +332,11 @@ dws_driver_flash_busyloop_until_done:
 	call _driver_unswitch_slot_sram
 	mov al, 1
 
-	jmp _drs_postamble
+	pop	di
+	pop	si
+
+	call driver_slot_finish_error_check
+	ASM_PLATFORM_RET 0x4
 
 driver_erase_bank:
 	xor ax, ax
@@ -365,8 +374,77 @@ deb_driver_flash_busyloop_until_done:
 
 	pop di
 	pop es
+
+	call driver_slot_finish_error_check
 driver_erase_bank_finish:
 	ASM_PLATFORM_RET
+
+# check if the slot was correctly remounted
+# this is pretty bare-bones and could be better
+driver_slot_finish_error_check:
+	push ds
+	push si
+	mov ax, 0xFFFF
+	mov ds, ax
+	mov si, 0x0005
+
+	lodsw
+	cmp ax, 0xAA00
+	mov al, 0x50
+	jne driver_write_error
+
+	lodsw
+	cmp ax, 0x5501
+	mov al, 0x51
+	jne driver_write_error
+
+	pop si
+	pop ds
+	ret
+
+# 1-byte value in AL => 4 bytes in ES:DI (for display)
+# clobbers AX
+driver_emergency_error_handler_hex2int:
+	mov ah, 0
+	push ax
+	shr al, 4
+	call hex2int_write
+	pop ax
+	and al, 0x0F
+	call hex2int_write
+	ret
+
+hex2int_write:
+	add al, 48
+	cmp al, 58
+	jl hex2int_09
+	add al, 7
+hex2int_09:
+	stosw
+	ret
+
+# AL has initial error number
+driver_write_error:
+	xor bx, bx
+	mov es, bx
+	mov di, 0x3800
+	call driver_emergency_error_handler_hex2int
+	in al, 0xC0
+	call driver_emergency_error_handler_hex2int
+	in al, 0xC1
+	call driver_emergency_error_handler_hex2int
+	in al, 0xCE
+	call driver_emergency_error_handler_hex2int
+	in ax, 0x00
+	or al, 0x03
+	out 0x00, ax
+_end:
+	cli
+	xor ax, ax
+	out 0xB2, al
+_end_loop:
+	hlt
+	jmp _end_loop
 
 	.section .bss
 _driver_bank_temp:

@@ -43,6 +43,16 @@ static uint8_t osk_en2[OSK_EN_HEIGHT * OSK_EN_WIDTH] = {
      24, 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '~', '<', '>', ' '
 };
 
+#define OSK_IEEP_WIDTH 11
+#define OSK_IEEP_HEIGHT 4
+
+static uint8_t osk_ieep[OSK_IEEP_HEIGHT * OSK_IEEP_WIDTH] = {
+    '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', 
+    'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '-',
+    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', '.',
+    ' ', 'Z', 'X', 'C', 'V', 'B', 'N', 'M',  3,  13,  ' '
+};
+
 typedef struct {
     uint16_t flags;
     char *buf;
@@ -105,13 +115,20 @@ bool ui_osk_run(uint16_t flags, char *buf, uint8_t buf_width) {
     ui_osk_state_t osk = {
         .flags = flags,
         .buf = buf,
-        .layout = osk_en1,
         .buf_width = buf_width,
-        .width = OSK_EN_WIDTH,
-        .height = OSK_EN_HEIGHT,
         .osk_x = 0,
         .osk_y = 3
     };
+
+    if ((flags & UI_OSK_LAYOUT_MASK) == UI_OSK_LAYOUT_IEEP) {
+        osk.layout = osk_ieep;
+        osk.width = OSK_IEEP_WIDTH;
+        osk.height = OSK_IEEP_HEIGHT;
+    } else {
+        osk.layout = osk_en1;
+        osk.width = OSK_EN_WIDTH;
+        osk.height = OSK_EN_HEIGHT;
+    }
 
     uint8_t width = ((buf_width > (osk.width * 2 - 1)) ? buf_width : (osk.width * 2 - 1)) + 4;
     uint8_t height = ((osk.height * 2) - 1) + 6;

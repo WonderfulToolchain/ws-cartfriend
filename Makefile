@@ -38,10 +38,10 @@ vpath %.S $(SRCDIRS_ALL)
 all: CartFriend_FlashMasta.wsc CartFriend_FlashMasta_SafeMode.wsc CartFriend_FlashMasta.sram.bin CartFriend_Stub.ws
 
 CartFriend_FlashMasta.wsc: $(OBJECTS) $(OBJECTS_FLASH_MASTA)
-	$(SWANLINK) -v -o $@ --output-elf $@.elf $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
+	$(SWANLINK) -v -o $@ --publisher-id 170 --game-id 55 --output-elf $@.elf $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
 
 CartFriend_FlashMasta_SafeMode.wsc: $(OBJECTS) $(OBJECTS_FLASH_MASTA)
-	$(SWANLINK) -v -o $@ --output-elf $@.elf $(SLFLAGS) --disable-custom-bootsplash --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
+	$(SWANLINK) -v -o $@ --publisher-id 170 --game-id 55 --output-elf $@.elf $(SLFLAGS) --disable-custom-bootsplash --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
 
 CartFriend_FlashMasta.sram.bin: $(OBJECTS) $(OBJECTS_FLASH_MASTA)
 	$(SWANLINK) -v -o $@ --output-elf $@.elf -t sram_binary $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)

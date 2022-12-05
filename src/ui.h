@@ -140,6 +140,9 @@ void ui_pbar_draw(ui_pbar_state_t *state);
 
 // Dialogs
 
+#define UI_OSK_LAYOUT_MASK 0x0007
+#define UI_OSK_LAYOUT_IEEP 0x0001
+
 uint8_t ui_dialog_run(uint16_t flags, uint8_t initial_option, uint16_t lk_question, uint16_t lk_options);
 bool ui_osk_run(uint16_t flags, char *buf, uint8_t buf_width); // ui_osk.c
 
