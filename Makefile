@@ -6,7 +6,7 @@ include $(WONDERFUL_TOOLCHAIN)/i8086/wswan.mk
 OBJDIR := obj
 MKDIRS := $(OBJDIR)
 LIBS := -lws -lc -lgcc
-CFLAGS += -Os -fno-jump-tables
+CFLAGS += -Os -fno-jump-tables -fno-function-sections
 SLFLAGS := --heap-length 0x1800 --rtc --color --rom-size 2 --ram-type SRAM_512KB
 
 SRCDIRS := res src
