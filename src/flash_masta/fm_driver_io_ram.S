@@ -330,12 +330,12 @@ dws_driver_flash_busyloop_until_done:
 	pop	ds
 
 	call _driver_unswitch_slot_sram
-	mov al, 1
 
 	pop	di
 	pop	si
 
 	call driver_slot_finish_error_check
+	mov al, 1
 	ASM_PLATFORM_RET 0x4
 
 driver_erase_bank:
@@ -370,13 +370,13 @@ deb_driver_flash_busyloop_until_done:
 	jne deb_driver_flash_busyloop_until_done
 
 	call _driver_unswitch_slot_sram
-	mov al, 1
 
 	pop di
 	pop es
 
 	call driver_slot_finish_error_check
 driver_erase_bank_finish:
+	mov al, 1
 	ASM_PLATFORM_RET
 
 # check if the slot was correctly remounted
