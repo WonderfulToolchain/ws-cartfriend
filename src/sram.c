@@ -135,8 +135,6 @@ void sram_erase(uint8_t sram_slot) {
 
         ui_clear_work_indicator();
     } else if (sram_slot == SRAM_SLOT_ALL) {
-        driver_unlock();
-
         pbar.step_max = 8 * SRAM_SLOTS;
         ui_pbar_init(&pbar);
 
@@ -152,11 +150,7 @@ void sram_erase(uint8_t sram_slot) {
                 driver_erase_bank(0, driver_slot, rom_slot + (i & 7));
             }
         }
-
-        driver_lock();
     } else {
-        driver_unlock();
-
         pbar.step_max = 8;
         ui_pbar_init(&pbar);
 
@@ -172,8 +166,6 @@ void sram_erase(uint8_t sram_slot) {
                 driver_erase_bank(0, driver_slot, rom_slot + i);
             }
         }
-
-        driver_lock();
     }
 
     ui_update_indicators();
@@ -198,18 +190,14 @@ void sram_switch_to_slot(uint8_t sram_slot) {
     }
 
     if (settings_local.active_sram_slot < SRAM_SLOTS) {
-        if (!unlocked) { driver_unlock(); unlocked = true; }
         sram_backup_restore_slot(settings_local.active_sram_slot, false);
         settings_local.active_sram_slot = SRAM_SLOT_NONE;
         settings_mark_changed();
     }
 
     if (sram_slot < SRAM_SLOTS) {
-        if (!unlocked) { driver_unlock(); unlocked = true; }
         sram_backup_restore_slot(sram_slot, true);
         settings_local.active_sram_slot = sram_slot;
         settings_mark_changed();
     }
-
-    if (unlocked) driver_lock();
 }

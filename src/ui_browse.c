@@ -270,7 +270,6 @@ void ui_browse(void) {
 
         if (subaction == BROWSE_SUB_LAUNCH) {
             ui_reset_main_screen();
-            driver_unlock();
 
             memset(menu_list, 0xFF, 16);
             ui_read_rom_header_from_entry(menu_list, result);
