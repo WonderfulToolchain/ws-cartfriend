@@ -82,16 +82,21 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
 
 #define MENU_ADV_CART_AVR_DELAY 0
 #define MENU_ADV_FORCECARTSRAM 1
+#define MENU_ADV_BUFFERED_WRITES 2
 
 static uint16_t __far ui_adv_lks[] = {
     LK_UI_SETTINGS_CART_AVR_DELAY,
-    LK_UI_SETTINGS_FORCECARTSRAM
+    LK_UI_SETTINGS_FORCECARTSRAM,
+    LK_UI_SETTINGS_BUFFERED_WRITES
 };
 
 static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     strncpy(buf, lang_keys[ui_adv_lks[entry_id]], buf_len);
     if (entry_id == MENU_ADV_FORCECARTSRAM) {
         bool yes = settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT;
+        strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
+    } else if (entry_id == MENU_ADV_BUFFERED_WRITES) {
+        bool yes = !(settings_local.flags1 & SETT_FLAGS1_DISABLE_BUFFERED_WRITES);
         strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
     } else if (entry_id == MENU_ADV_CART_AVR_DELAY) {
         npf_snprintf(buf_right, buf_right_len, lang_keys[LK_UI_D_MS], (uint16_t) settings_local.avr_cart_delay);
@@ -173,6 +178,7 @@ static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, 
 static void ui_settings_advanced(uint8_t *menu_list) {
     uint8_t i = 0;
     menu_list[i++] = MENU_ADV_FORCECARTSRAM;
+    menu_list[i++] = MENU_ADV_BUFFERED_WRITES;
     // menu_list[i++] = MENU_ADV_CART_AVR_DELAY;
     menu_list[i++] = MENU_ENTRY_END;
 
@@ -194,6 +200,10 @@ Reselect:
                 settings_mark_changed();
             }
         }
+    } else if (result == MENU_ADV_BUFFERED_WRITES) {
+        settings_local.flags1 ^= SETT_FLAGS1_DISABLE_BUFFERED_WRITES;
+        settings_mark_changed();
+        goto Reselect;
     } /* else if (result == MENU_ADV_CART_AVR_DELAY) {
         settings_local.avr_cart_delay += 5;
         if (settings_local.avr_cart_delay < MINIMUM_AVR_CART_DELAY) {

@@ -65,7 +65,7 @@ _driver_change_loop:
 	shl cx, 2
 	add cx, ax
 	shl cx, 7 */
-	mov cx, (615 * 15) // ~15 ms
+	mov cx, (615 * 12) // ~12 ms (~15 ms known to be reliable)
 _dc_loop2:
 	loop _dc_loop2
 	pop cx

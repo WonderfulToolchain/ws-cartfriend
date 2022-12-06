@@ -201,7 +201,7 @@ _driver_change_loop:
 	shl cx, 2
 	add cx, ax
 	shl cx, 7 */
-	mov cx, (615 * 15) // ~15 ms
+	mov cx, (615 * 12) // ~12 ms (~15 ms known to be reliable)
 _dc_loop2:
 	loop _dc_loop2
 	pop cx
@@ -311,6 +311,45 @@ driver_write_slot:
 	mov byte ptr es:[bx], 0xAA
 	mov byte ptr es:[0x555], 0x55
 	mov byte ptr es:[bx], 0x20
+
+	// check if we can write buffered
+	// we need to be within one 512-byte block
+	// and length needs to be <= 256
+	cmp cx, 256
+	ja _dws_write_slow
+
+	mov ax, di
+	add ax, cx
+	xor ax, di
+	and ax, 0xFE00
+	jnz _dws_write_slow
+
+	mov al, byte ptr [settings_local + 423]
+	test al, 0x02
+	jnz _dws_write_slow
+
+_dws_write_fast:
+	dec cx
+
+	// start write
+	xor bx, bx
+	mov byte ptr es:[bx], 0x25
+	mov byte ptr es:[bx], cl
+
+	cld
+_dws_fast_loop:
+	movsb
+	loop _dws_fast_loop
+	movsb
+
+	// confirm write
+	mov byte ptr es:[bx], 0x29
+
+	// cx is 0
+	inc cx
+	jmp dws_driver_flash_busyloop_until_done
+
+_dws_write_slow:
 	xor bx, bx
 	cld
 _dws_loop:

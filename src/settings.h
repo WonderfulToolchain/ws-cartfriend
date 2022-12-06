@@ -53,6 +53,7 @@ typedef struct __attribute__((packed)) {
 } settings_t;
 
 #define SETT_FLAGS1_HIDE_SLOT_IDS 0x01
+#define SETT_FLAGS1_DISABLE_BUFFERED_WRITES 0x02
 
 extern settings_t settings_local;
 extern bool settings_changed;
