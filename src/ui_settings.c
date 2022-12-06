@@ -228,10 +228,10 @@ void ui_settings(void) {
         menu_list[i++] = MENU_OPT_SLOTMAP;
         menu_list[i++] = MENU_OPT_SAVEMAP;
         menu_list[i++] = MENU_OPT_SAVE_MANAGEMENT;
+        menu_list[i++] = MENU_OPT_ADVANCED;
         if (settings_local.active_sram_slot < SRAM_SLOTS) {
             menu_list[i++] = MENU_OPT_UNLOAD_SRAM;
         }
-        menu_list[i++] = MENU_OPT_ADVANCED;
         menu_list[i++] = MENU_ENTRY_DIVIDER;
     }
     menu_list[i++] = MENU_OPT_SAVE;
@@ -348,8 +348,6 @@ SaveMgmtReselect:
         }
 
         if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
-            uint8_t slot_to_erase;
-
             if (result < SRAM_SLOTS) {
                 // if active, abandon SRAM data too
                 if (result == settings_local.active_sram_slot) {
@@ -370,8 +368,6 @@ SaveMgmtReselect:
             } else {
                 return;
             }
-
-            sram_erase(slot_to_erase);
         } else {
             goto SaveMgmtReselect;
         }
