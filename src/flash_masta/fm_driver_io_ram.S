@@ -59,6 +59,7 @@ driver_launch_slot_relocated:
 	out 0xCD, al
 	xor ax, ax
 	out 0xCC, al
+
 	// the memory clears will take the necessary time
 	mov di, 0x2200
 	mov cx, 0xF00
@@ -194,12 +195,13 @@ _driver_switch_slot1:
 	call _rtc_wait_ready
 _driver_change_loop:
 	push cx
-	mov ch, 0
+/*	mov ch, 0
 	mov cl, byte ptr [settings_local + 424]
 	mov ax, cx
 	shl cx, 2
 	add cx, ax
-	shl cx, 7
+	shl cx, 7 */
+	mov cx, (615 * 15) // ~15 ms
 _dc_loop2:
 	loop _dc_loop2
 	pop cx
@@ -342,37 +344,36 @@ driver_erase_bank:
 	xor ax, ax
 	test cl, 1
 	jnz driver_erase_bank_finish
-	and cl, 0xFE
 
-	push es
-	push di
+	push ds
+	push si
 
 	call _driver_switch_slot_sram
 
 	// execute erase command
 	mov bx, 0x1000
-	mov es, bx
+	mov ds, bx
 	mov bx, 0xAAA
-	mov di, 0x555
+	mov si, 0x555
 
-	mov byte ptr es:[bx], 0xAA
-	mov byte ptr es:[di], 0x55
-	mov byte ptr es:[bx], 0x80
-	mov byte ptr es:[bx], 0xAA
-	mov byte ptr es:[di], 0x55
+	mov byte ptr [bx], 0xAA
+	mov byte ptr [si], 0x55
+	mov byte ptr [bx], 0x80
+	mov byte ptr [bx], 0xAA
+	mov byte ptr [si], 0x55
 	xor bx, bx
-	mov byte ptr es:[bx], 0x30
+	mov byte ptr [bx], 0x30
 
 deb_driver_flash_busyloop_until_done:
-	mov ah, byte ptr es:[bx]
-	mov al, byte ptr es:[bx]
+	mov ah, byte ptr [bx]
+	mov al, byte ptr [bx]
 	cmp ah, al // DQ2 and/or DQ6 toggles if status register
 	jne deb_driver_flash_busyloop_until_done
 
 	call _driver_unswitch_slot_sram
 
-	pop di
-	pop es
+	pop si
+	pop ds
 
 	call driver_slot_finish_error_check
 driver_erase_bank_finish:
@@ -381,9 +382,11 @@ driver_erase_bank_finish:
 
 # check if the slot was correctly remounted
 # this is pretty bare-bones and could be better
+# clobbers ax
 driver_slot_finish_error_check:
 	push ds
 	push si
+
 	mov ax, 0xFFFF
 	mov ds, ax
 	mov si, 0x0005

@@ -59,12 +59,13 @@ _rtc_read_data_al:
 # clobbers AX
 _driver_change_loop:
 	push cx
-	mov ch, 0
+/*	mov ch, 0
 	mov cl, byte ptr [settings_local + 424]
 	mov ax, cx
 	shl cx, 2
 	add cx, ax
-	shl cx, 7
+	shl cx, 7 */
+	mov cx, (615 * 15) // ~15 ms
 _dc_loop2:
 	loop _dc_loop2
 	pop cx

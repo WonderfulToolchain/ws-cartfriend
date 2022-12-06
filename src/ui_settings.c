@@ -173,7 +173,7 @@ static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, 
 static void ui_settings_advanced(uint8_t *menu_list) {
     uint8_t i = 0;
     menu_list[i++] = MENU_ADV_FORCECARTSRAM;
-    menu_list[i++] = MENU_ADV_CART_AVR_DELAY;
+    // menu_list[i++] = MENU_ADV_CART_AVR_DELAY;
     menu_list[i++] = MENU_ENTRY_END;
 
     ui_menu_state_t menu = {
@@ -194,7 +194,7 @@ Reselect:
                 settings_mark_changed();
             }
         }
-    } else if (result == MENU_ADV_CART_AVR_DELAY) {
+    } /* else if (result == MENU_ADV_CART_AVR_DELAY) {
         settings_local.avr_cart_delay += 5;
         if (settings_local.avr_cart_delay < MINIMUM_AVR_CART_DELAY) {
             settings_local.avr_cart_delay = MINIMUM_AVR_CART_DELAY;
@@ -203,7 +203,7 @@ Reselect:
         }
         settings_mark_changed();
         goto Reselect;
-    }
+    } */
 }
 
 void ui_settings(void) {
