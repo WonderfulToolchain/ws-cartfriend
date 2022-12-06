@@ -23,15 +23,19 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
+#include "wonderful-asm-common.h"
+#include "ws/hardware.h"
 #include "xmodem.h"
 #include "../res/wsmonitor.h"
 
 #define MENU_TOOL_SRAMCODE_XM 0
 #define MENU_TOOL_WSMONITOR 1
+#define MENU_TOOL_WSMONITOR_RAM 2
 
 static uint16_t __far ui_tool_lks[] = {
     LK_UI_TOOLS_SRAMCODE_XM,
-    LK_UI_TOOLS_WSMONITOR
+    LK_UI_TOOLS_WSMONITOR,
+    LK_UI_TOOLS_WSMONITOR_RAM
 };
 static void ui_tool_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     strncpy(buf, lang_keys[ui_tool_lks[entry_id]], buf_len);
@@ -103,6 +107,7 @@ void ui_tools(void) {
     uint8_t i = 0;
     if ((_CS & 0xF000) != 0x1000) menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
     menu_list[i++] = MENU_TOOL_WSMONITOR;
+    menu_list[i++] = MENU_TOOL_WSMONITOR_RAM;
     menu_list[i++] = MENU_ENTRY_END;
 
     ui_menu_state_t menu = {
@@ -116,5 +121,12 @@ void ui_tools(void) {
     switch (result) {
         case MENU_TOOL_SRAMCODE_XM: ui_tool_sramcode_xm(); break;
         case MENU_TOOL_WSMONITOR: launch_ram(_wsmonitor_bin); break;
+        case MENU_TOOL_WSMONITOR_RAM: {
+            wait_for_vblank();
+            cpu_irq_disable();
+            outportw(IO_DISPLAY_CTRL, 0);
+            memcpy((uint8_t*) 0x3000, _wsmonitor_bin, _wsmonitor_bin_size);
+            launch_ram(MK_FP(0x0300, 0x0000));
+        }
     }
 }
