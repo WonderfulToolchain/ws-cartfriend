@@ -356,7 +356,13 @@ _dws_loop:
 	mov byte ptr es:[bx], 0xA0
 	movsb
 dws_driver_flash_busyloop_until_done:
+	nop
+	nop
+	nop
 	mov ah, byte ptr es:[di]
+	nop
+	nop
+	nop
 	mov al, byte ptr es:[di]
 	cmp ah, al // DQ2 and/or DQ6 toggles if status register
 	jne dws_driver_flash_busyloop_until_done
@@ -404,7 +410,13 @@ driver_erase_bank:
 	mov byte ptr [bx], 0x30
 
 deb_driver_flash_busyloop_until_done:
+	nop
+	nop
+	nop
 	mov ah, byte ptr [bx]
+	nop
+	nop
+	nop
 	mov al, byte ptr [bx]
 	cmp ah, al // DQ2 and/or DQ6 toggles if status register
 	jne deb_driver_flash_busyloop_until_done
