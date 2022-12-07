@@ -41,6 +41,8 @@ static uint8_t sram_get_slot(uint8_t sram_slot) {
     return slot;
 }
 
+bool sram_copy_buffer_checkff(void* restrict s1, uint16_t offset);
+
 static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
     uint8_t rom_slot = sram_get_slot(sram_slot);
     uint8_t driver_slot = driver_get_launch_slot();
@@ -81,24 +83,20 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
             pbar.step_max = 2048;
             for (uint16_t i = 0; i < 2048; i++) {
                 pbar.step = i;
-                ui_pbar_draw(&pbar);
+                if (!(i & 3)) ui_pbar_draw(&pbar);
                 ui_step_work_indicator();
 
                 ws_bank_ram_set(i >> 8);
                 uint8_t bank = (i >> 8) | rom_slot;
                 uint16_t offset = (i << 8);
-                uint8_t __far* sram_buffer = MK_FP(0x1000, offset);
 
-                memcpy(buffer, sram_buffer, 256);
 #ifdef USE_PARTIAL_WRITES
-                uint16_t *buffer16 = (uint16_t*) buffer;
-                for (uint8_t i = 0; i < (sizeof(buffer) >> 1); i++) {
-                    if (buffer16[i] != 0xFFFF) {
-                        driver_write_slot(buffer, driver_slot, bank, offset, sizeof(buffer));
-                        break;
-                    }
+                if (sram_copy_buffer_checkff(buffer, offset)) {
+                    driver_write_slot(buffer, driver_slot, bank, offset, sizeof(buffer));
                 }
 #else
+                uint8_t __far* sram_buffer = MK_FP(0x1000, offset);
+                memcpy(buffer, sram_buffer, 256);
                 driver_write_slot(buffer, driver_slot, bank, offset, sizeof(buffer));
 #endif
             }

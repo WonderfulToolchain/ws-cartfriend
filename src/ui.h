@@ -131,7 +131,7 @@ uint16_t ui_popup_menu_run(ui_popup_menu_state_t *menu);
 // Progress bars
 
 typedef struct {
-    uint16_t step, step_max;
+    uint16_t step, step_max, step_last;
     uint8_t x, y, width;
 } ui_pbar_state_t;
 

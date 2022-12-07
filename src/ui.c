@@ -186,7 +186,7 @@ void ui_scroll(int8_t offset) {
     outportb(IO_SCR1_SCRL_Y, (scroll_y - 1) << 3);
 }
 
-void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color) {
+inline void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color) {
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
     ws_screen_put(screen, prefix | chr, x++, y);
@@ -597,19 +597,22 @@ uint16_t ui_popup_menu_run(ui_popup_menu_state_t *menu) {
 
 void ui_pbar_init(ui_pbar_state_t *state) {
     state->step = 0;
+    state->step_last = 0;
 }
 
 void ui_pbar_draw(ui_pbar_state_t *state) {
     uint16_t step_count = state->width * 8;
     uint16_t step_current = (((uint32_t) state->step) * step_count) / state->step_max;
-    uint8_t i = 0;
-    uint8_t x = state->x;
-    for (i = 8; i <= step_current; i += 8) {
-        ui_putc(false, x++, state->y, 219, UI_PAL_PBAR);
-    }
-    step_current &= 7;
-    if (step_current > 0) {
-        ui_putc(false, x, state->y, step_current + UI_GLYPH_HORIZONTAL_PBAR, UI_PAL_PBAR);
+    if (state->step_last != step_current) {
+        uint8_t i = 0;
+        uint8_t x = state->x;
+        for (i = 8; i <= step_current; i += 8) {
+            ui_putc(false, x++, state->y, 219, UI_PAL_PBAR);
+        }
+        step_current &= 7;
+        if (step_current > 0) {
+            ui_putc(false, x, state->y, step_current + UI_GLYPH_HORIZONTAL_PBAR, UI_PAL_PBAR);
+        }
     }
 }
 
