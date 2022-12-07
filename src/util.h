@@ -23,3 +23,5 @@ void wait_for_vblank(void);
 
 int u8_arraylist_len(uint8_t *list);
 int u16_arraylist_len(uint16_t *list);
+
+uint16_t crc16(const char *data, uint16_t len, uint16_t pad_len);

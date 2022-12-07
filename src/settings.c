@@ -18,9 +18,11 @@
 #include <string.h>
 #include "config.h"
 #include "driver.h"
+#include "error.h"
 #include "lang.h"
 #include "settings.h"
 #include "ui.h"
+#include "util.h"
 
 // Saving a 1KB settings block across 128 slots allows for wear leveling.
 // Given that one block of WSFM flash is rated for 100,000 erases, this should give >12 million
@@ -154,7 +156,13 @@ void settings_save(void) {
     if (active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
         settings_local.active_sram_slot = SRAM_SLOT_NONE;
     }
-    driver_write_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), settings_slot << 10, sizeof(settings_local));
+
+    // write settings data
+    driver_write_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10), sizeof(settings_local));
+    // write settings CRC
+    uint16_t settings_crc = crc16((const char*) &settings_local, sizeof(settings_local), 1022);
+    driver_write_slot(&settings_crc, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 1022, 2);
+
     settings_local.active_sram_slot = active_sram_slot;
 
     ui_clear_work_indicator();
