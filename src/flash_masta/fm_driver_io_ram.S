@@ -334,9 +334,13 @@ _dws_write_fast:
 	mov byte ptr es:[bx], cl
 
 	cld
+	shr cx, 1
 _dws_fast_loop:
-	movsb
+	movsw
 	loop _dws_fast_loop
+	jnc _dws_fast_loop2
+	movsb
+_dws_fast_loop2:
 	movsb
 
 	// confirm write
