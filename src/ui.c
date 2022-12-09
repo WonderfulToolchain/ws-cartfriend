@@ -316,6 +316,9 @@ void ui_set_current_tab(uint8_t tab) {
 
 void ui_update_indicators(void) {
     ui_putc(true, 0, 17, settings_local.active_sram_slot < SRAM_SLOTS ? UI_GLYPH_SRAM_ACTIVE : 0, 2);
+    if (driver_supports_slots()) {
+        ui_putc(true, 2, 17, settings_changed ? UI_GLYPH_SETTINGS_CHANGED : 0, 2);
+    }
 }
 
 bool ui_poll_events(void) {

@@ -42,10 +42,6 @@ driver_launch_slot_relocated:
 	mov ax, [0x50]
 	mov [0x2002], ax
 
-	// initialize RAM banks
-	mov al, 0xFF
-	out 0xC1, al
-
 	// initialize ROM banks
 	mov al, cl
 	or al, 0xF
@@ -53,6 +49,7 @@ driver_launch_slot_relocated:
 	out 0xC3, al
 	ror al, 4
 	out 0xC0, al
+	out 0xC1, al
 
 	// lock cartridge
 	mov al, 0x08

@@ -67,6 +67,10 @@ void settings_reset(void) {
     settings_slot = MAX_SETTINGS_SLOT;
 }
 
+static inline uint16_t settings_calculate_crc(void) {
+    return crc16((const char*) &settings_local, sizeof(settings_local), 1022);
+}
+
 static void settings_migrate(void) {
     if (settings_local.version > SETTINGS_VERSION) {
         ui_show();
@@ -100,24 +104,31 @@ void settings_load(void) {
     settings_changed = false;
     bool settings_found = false;
 
-    if (driver_get_launch_slot() != 0xFF) {
-        driver_unlock();
+    if (!driver_supports_slots()) {
+        settings_reset();
+        return;
+    }
 
+    if (driver_get_launch_slot() != 0xFF) {
         settings_slot = MAX_SETTINGS_SLOT;
         while (settings_slot <= MAX_SETTINGS_SLOT) {
             memset(&settings_local, 0, 6);
             driver_read_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), settings_slot << 10, 6);
 
             if (!memcmp(settings_magic, &settings_local, 4)) {
-                driver_read_slot(((uint8_t*) &settings_local) + 6, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 6, sizeof(settings_local) - 6);
-                settings_found = true;
-                break;
+                bool read_ok = driver_read_slot(((uint8_t*) &settings_local) + 6, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 6, sizeof(settings_local) - 6);
+                uint16_t settings_crc;
+                read_ok &= driver_read_slot(&settings_crc, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 1022, 2);
+                if (read_ok) {
+                    uint16_t settings_crc_calculated = settings_calculate_crc();
+                    // TODO: check settings CRC
+                    settings_found = true;
+                    break;
+                }
             } else {
                 settings_slot--;
             }
         }
-
-        driver_lock();
     }
 
     if (!settings_found) {
@@ -137,6 +148,7 @@ void settings_refresh(void) {
 
 void settings_mark_changed(void) {
     settings_changed = true;
+    ui_update_indicators();
 }
 
 void settings_save(void) {
@@ -160,11 +172,12 @@ void settings_save(void) {
     // write settings data
     driver_write_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10), sizeof(settings_local));
     // write settings CRC
-    uint16_t settings_crc = crc16((const char*) &settings_local, sizeof(settings_local), 1022);
+    uint16_t settings_crc = settings_calculate_crc();
     driver_write_slot(&settings_crc, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 1022, 2);
 
     settings_local.active_sram_slot = active_sram_slot;
 
     ui_clear_work_indicator();
     settings_changed = false;
+    ui_update_indicators();
 }

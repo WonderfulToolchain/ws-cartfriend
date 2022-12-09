@@ -52,10 +52,11 @@ __attribute__((format(printf, 5, 6))) void ui_printf_right(bool alt_screen, uint
 #define UI_THEME_COUNT 3
 void ui_update_theme(uint8_t current_theme);
 
-#define UI_GLYPH_LOW_BATTERY 8
-#define UI_GLYPH_SRAM_ACTIVE 10
+#define UI_GLYPH_LOW_BATTERY 8 // 1, 17
+#define UI_GLYPH_SRAM_ACTIVE 10 // 0, 17
 #define UI_GLYPH_ARROW_RIGHT 16
 #define UI_GLYPH_ARROW_LEFT 17
+#define UI_GLYPH_SETTINGS_CHANGED 20 // 2, 17
 #define UI_GLYPH_SPACE_BAR_ICON 28
 #define UI_GLYPH_TRIANGLE_UR 169
 #define UI_GLYPH_TRIANGLE_UL 170

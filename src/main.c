@@ -71,9 +71,11 @@ void main(void) {
     outportb(IO_LCD_SEG, LCD_SEG_ORIENT_H);
 
 	if (settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
-		ui_reset_main_screen();
-		if (ui_dialog_run(0, 0, LK_DIALOG_FIRST_BOOT_ERASE, LK_DIALOG_YES_NO) == 0) {
-			sram_erase(SRAM_SLOT_ALL);
+	    if (driver_supports_slots()) {
+			ui_reset_main_screen();
+			if (ui_dialog_run(0, 0, LK_DIALOG_FIRST_BOOT_ERASE, LK_DIALOG_YES_NO) == 0) {
+				sram_erase(SRAM_SLOT_ALL);
+			}
 		}
 	}
 
