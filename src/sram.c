@@ -65,10 +65,13 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
                 ui_pbar_draw(&pbar);
                 ui_step_work_indicator();
 
-                ws_bank_ram_set(i >> 5);
-                uint8_t bank = (i >> 5) | rom_slot;
+                if (!(i & 31)) {
+                    outportb(IO_BANK_RAM, i >> 5);
+                    uint8_t bank = (i >> 5) | rom_slot;
+                    outportb(IO_BANK_ROM1, bank);
+                    asm volatile("" ::: "memory");
+                }
                 uint16_t offset = (i << 11);
-                outportb(IO_BANK_ROM1, bank);
 
                 // ROM -> SRAM
                 memcpy(MK_FP(0x1000, offset), MK_FP(0x3000, offset), 2048);
@@ -83,10 +86,15 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
             pbar.step_max = 2048;
             for (uint16_t i = 0; i < 2048; i++) {
                 pbar.step = i;
-                if (!(i & 3)) ui_pbar_draw(&pbar);
+                if (!(i & 3)) {
+                    ui_pbar_draw(&pbar);
+                    if (!(i & 255)) {
+                        outportb(IO_BANK_RAM, i >> 8);
+                        asm volatile("" ::: "memory");
+                    }
+                }
                 ui_step_work_indicator();
 
-                ws_bank_ram_set(i >> 8);
                 uint8_t bank = (i >> 8) | rom_slot;
                 uint16_t offset = (i << 8);
 

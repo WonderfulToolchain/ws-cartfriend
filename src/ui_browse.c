@@ -152,8 +152,10 @@ void ui_browse_info(uint8_t slot) {
     char buf[32], buf2[24];
     uint8_t rom_header[16];
 
+    driver_unlock();
     ui_reset_main_screen();
     ui_read_rom_header_from_entry(rom_header, slot);
+    driver_lock();
     input_wait_clear();
 
     npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ID_VAL],

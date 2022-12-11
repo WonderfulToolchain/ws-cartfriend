@@ -39,21 +39,27 @@ sram_copy_buffer_checkff:
 	mov ds, ax
 	mov cx, 0x80
 	cld
-sram_loop:
+sram_copy_buffer_checkff_loop:
 	lodsw
 	stosw
 	cmp ax, dx
-	jnz sram_loop_found_data
-	loop sram_loop
-	mov al, 0
-	jmp sram_loop_done
-
-sram_loop_found_data:
-	mov al, 1
 	dec cx
+	jnz sram_copy_buffer_checkff_loop_found_data_postdec
+	lodsw
+	stosw
+	cmp ax, dx
+	jnz sram_copy_buffer_checkff_loop_found_data
+	loop sram_copy_buffer_checkff_loop
+	mov al, 0
+	jmp sram_copy_buffer_checkff_loop_done
+
+sram_copy_buffer_checkff_loop_found_data:
+	dec cx
+sram_copy_buffer_checkff_loop_found_data_postdec:
+	mov al, 1
 	rep movsw
 
-sram_loop_done:
+sram_copy_buffer_checkff_loop_done:
 	pop	es
 	pop ds
 	pop	di
