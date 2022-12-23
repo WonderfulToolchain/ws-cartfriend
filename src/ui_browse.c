@@ -225,7 +225,7 @@ void ui_browse_info(uint8_t slot) {
         rom_header[9] & 0x80 ? LK_CONFIG_YES : LK_CONFIG_NO
     ]);
 
-    ui_printf(false, 1, 11, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_SPEED], (uint16_t) ((rom_header[12] & 0x04) ? 1 : 3));
+    ui_puts(false, 1, 11, 0, lang_keys[(rom_header[12] & 0x04) ? LK_UI_BROWSE_INFO_ROM_SPEED_1 : LK_UI_BROWSE_INFO_ROM_SPEED_3]);
     ui_printf(false, 1, 12, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_BUS_SIZE], (uint16_t) ((rom_header[12] & 0x02) ? 8 : 16));
 
     ui_printf(false, 1, 14, 0, lang_keys[LK_UI_BROWSE_INFO_CHECKSUM], (uint16_t) rom_header[15], (uint16_t) rom_header[14]);
