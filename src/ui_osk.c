@@ -30,13 +30,13 @@ extern bool ui_dialog_open;
 #define OSK_EN_WIDTH 12
 #define OSK_EN_HEIGHT 4
 
-static uint8_t osk_en1[OSK_EN_HEIGHT * OSK_EN_WIDTH] = {
+static const uint8_t __far osk_en1[OSK_EN_HEIGHT * OSK_EN_WIDTH] = {
     '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 
     'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',
     'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', '/',';', '\'',
      25, 'z', 'x', 'c', 'v', 'b', 'n', 'm', '`', ',', '.', ' '
 };
-static uint8_t osk_en2[OSK_EN_HEIGHT * OSK_EN_WIDTH] = {
+static const uint8_t __far osk_en2[OSK_EN_HEIGHT * OSK_EN_WIDTH] = {
     '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 
     'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}',
     'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?',':', '"',
@@ -46,7 +46,7 @@ static uint8_t osk_en2[OSK_EN_HEIGHT * OSK_EN_WIDTH] = {
 #define OSK_IEEP_WIDTH 11
 #define OSK_IEEP_HEIGHT 4
 
-static uint8_t osk_ieep[OSK_IEEP_HEIGHT * OSK_IEEP_WIDTH] = {
+static const uint8_t __far osk_ieep[OSK_IEEP_HEIGHT * OSK_IEEP_WIDTH] = {
     '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '+', 
     'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '-',
     'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', '.',
@@ -56,7 +56,7 @@ static uint8_t osk_ieep[OSK_IEEP_HEIGHT * OSK_IEEP_WIDTH] = {
 typedef struct {
     uint16_t flags;
     char *buf;
-    uint8_t *layout;
+    const uint8_t __far* layout;
     uint8_t buf_width;
     uint8_t width, height;
     uint8_t xt, xb, y;
@@ -86,7 +86,7 @@ void ui_osk_draw(ui_osk_state_t *osk, uint8_t what) {
     }
     
     if (what & OSK_DRAW_BUTTONS) {
-        uint8_t *layout_ptr = osk->layout;
+        const uint8_t __far* layout_ptr = osk->layout;
         for (uint8_t oy = 0; oy < osk->height; oy++) {
             for (uint8_t ox = 0; ox < osk->width; ox++, layout_ptr++) {
                 bool active = (ox == osk->osk_x) && (oy == osk->osk_y);

@@ -428,6 +428,7 @@ driver_erase_bank:
 	xor bx, bx
 	mov byte ptr [bx], 0x30
 
+	.balign 2, 0x90
 deb_driver_flash_busyloop_until_done:
 	nop
 	nop
