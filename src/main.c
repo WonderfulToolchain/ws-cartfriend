@@ -42,11 +42,7 @@ void vblank_int_handler(void) {
 	vblank_input_update();
 	ws_hwint_ack(HWINT_VBLANK);
 }
-
-__attribute__((interrupt))
-void lowbat_nmi_handler(void) {
-	outportb(IO_INT_NMI_CTRL, 0);
-}
+extern __attribute__((interrupt)) void lowbat_nmi_handler(void);
 
 void main(void) {
 	outportb(IO_INT_NMI_CTRL, 0);
@@ -63,6 +59,15 @@ void main(void) {
 
 	settings_load();
 	settings_refresh();
+
+    if (settings_local.flags1 & SETT_FLAGS1_UNLOCK_IEEP_NEXT_BOOT) {
+        settings_local.flags1 &= ~SETT_FLAGS1_UNLOCK_IEEP_NEXT_BOOT;
+        settings_mark_changed();
+        settings_save();
+    } else {
+        outportw(IO_IEEP_CTRL, IEEP_PROTECT);
+    }
+
 	input_wait_clear(); // wait for input to calm down
 
 	ui_set_current_tab(UI_TAB_BROWSE);
@@ -79,9 +84,13 @@ void main(void) {
 		}
 	}
 
+#ifdef USE_LOW_BATTERY_WARNING
+	// The NMI handler for low battery use must be in RAM - it can be called during
+	// flash writes/erases.
 	ws_cpuint_set_handler(CPUINT_IDX_NMI, lowbat_nmi_handler);
 	outportb(IO_INT_NMI_CTRL, NMI_ON_LOW_BATTERY);
-	
+#endif
+
 	while (true) {
 		ui_reset_main_screen();
 

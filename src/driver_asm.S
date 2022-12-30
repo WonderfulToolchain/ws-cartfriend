@@ -29,11 +29,12 @@
 	.intel_syntax noprefix
 	.global launch_ram_asm
 
+	.align 2
 launch_ram_asm:
 	cli
 
 	mov si, 0x2004
-	mov byte ptr [si], 0xEA 
+	mov byte ptr [si], 0xEA
 	mov [si+1], ax
 	mov [si+3], dx
 

@@ -31,7 +31,9 @@
 #include "ws/system.h"
 
 const char __far* const __far* lang_keys;
-uint8_t ui_low_battery_flag;
+#ifdef USE_LOW_BATTERY_WARNING
+extern uint8_t ui_low_battery_flag;
+#endif
 
 static const uint16_t __far theme_colorways[UI_THEME_COUNT][10] = {
     { // Light
@@ -130,7 +132,9 @@ void ui_reset_alt_screen(void) {
 
 void ui_init(void) {
     lang_keys = lang_keys_en;
+#ifdef USE_LOW_BATTERY_WARNING
     ui_low_battery_flag = 0;
+#endif
 
     outportw(IO_DISPLAY_CTRL, 0);
     outportb(IO_SPR_FIRST, 0);
@@ -325,11 +329,13 @@ bool ui_poll_events(void) {
     input_update();
     ui_update_indicators();
 
+#ifdef USE_LOW_BATTERY_WARNING
     if (ui_low_battery_flag == 1 && !ui_dialog_open) {
         ui_putc(true, 1, 17, UI_GLYPH_LOW_BATTERY, 2);
         ui_low_battery_flag = 2;
         ui_dialog_run(0, 0, LK_DIALOG_LOW_BATTERY, LK_DIALOG_OK);
     }
+#endif
 
     if (input_pressed & KEY_ALEFT) {
         if (ui_current_tab > 0) {

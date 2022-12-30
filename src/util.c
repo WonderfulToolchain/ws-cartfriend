@@ -52,13 +52,13 @@ int u16_arraylist_len(uint16_t *list) {
     if ((crc & (mask)) ^ (v & (mask))) { \
         crc = (crc >> 1) ^ CRC16_POLY; \
     } else { \
-        crc = (crc >> 1); \ 
+        crc = (crc >> 1); \
     }
 #define CRC16_CHECK_FF(mask) \
     if (!(crc & (mask))) { \
         crc = (crc >> 1) ^ CRC16_POLY; \
     } else { \
-        crc = (crc >> 1); \ 
+        crc = (crc >> 1); \
     }
 
 uint16_t crc16(const char *data, uint16_t len, uint16_t pad_len) {

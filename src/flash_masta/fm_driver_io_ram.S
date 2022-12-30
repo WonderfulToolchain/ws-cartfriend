@@ -115,7 +115,7 @@ driver_launch_slot_restore:
 	jmp 0xFFFF,0x0000
 driver_launch_slot_end:
 
-	.section .rodata
+	.section .data
 	.align 2
 driver_launch_slot:
 	push cx
@@ -152,6 +152,7 @@ driver_launch_slot:
 
 _rtc_wait_ready:
 	push ax
+	.balign 2, 0x90
 _rtc_wait_ready_loop:
 	in al, 0xCA
 	test al, 0x10
@@ -199,6 +200,7 @@ _driver_change_loop:
 	add cx, ax
 	shl cx, 7 */
 	mov cx, (615 * 12) // ~12 ms (~15 ms known to be reliable)
+	.balign 2, 0x90
 _dc_loop2:
 	loop _dc_loop2
 	pop cx
@@ -217,6 +219,7 @@ _driver_switch_slot_bank1:
 	mov al, cl
 	out 0xC3, al
 	jmp _driver_switch_slot1
+
 // clobbers AX, DL
 _driver_unswitch_slot_bank1:
 	mov al, [_driver_bank_temp]
@@ -238,6 +241,7 @@ _driver_switch_slot_sram:
 	mov al, cl
 	out 0xC1, al
 	jmp _driver_switch_slot1
+
 // clobbers AX, DL
 _driver_unswitch_slot_sram:
 	xor ax, ax
@@ -246,6 +250,17 @@ _driver_unswitch_slot_sram:
 	out 0xC1, al
 	jmp _driver_unswitch_slot
 
+_driver_reset_flash:
+	push ds
+	mov ax, 0x1000
+	mov ds, ax
+	mov byte ptr [0xAAA], 0xAA
+	mov byte ptr [0x555], 0x55
+	mov byte ptr [0x000], 0xF0
+	pop ds
+	ret
+
+	.align 2
 driver_read_slot:
 	push	si
 	push	di
@@ -284,6 +299,7 @@ _drs_no_byte:
 	call driver_slot_finish_error_check
 	ASM_PLATFORM_RET 0x4
 
+	.align 2
 driver_write_slot:
 	push	si
 	push	di
@@ -335,6 +351,7 @@ _dws_write_fast:
 
 	cld
 	shr cx, 1
+	.balign 2, 0x90
 _dws_fast_loop:
 	movsw
 	loop _dws_fast_loop
@@ -353,25 +370,22 @@ _dws_fast_loop2:
 _dws_write_slow:
 	xor bx, bx
 	cld
+	.balign 2, 0x90
 _dws_loop:
 	mov byte ptr es:[bx], 0xA0
 	movsb
 dws_driver_flash_busyloop_until_done:
-	nop
-	nop
-	nop
-	mov ah, byte ptr es:[di]
-	nop
-	nop
-	nop
 	mov al, byte ptr es:[di]
-	cmp ah, al // DQ2 and/or DQ6 toggles if status register
+	cmp al, byte ptr es:[di]
 	jne dws_driver_flash_busyloop_until_done
 	loop _dws_loop // 5 cycles
 
 	// stop bypass
 	mov byte ptr es:[bx], 0x90
 	mov byte ptr es:[bx], 0x00
+
+	// reset
+	call _driver_reset_flash
 
 	pop	bp
 	pop	es
@@ -386,8 +400,8 @@ dws_driver_flash_busyloop_until_done:
 	mov al, 1
 	ASM_PLATFORM_RET 0x4
 
+	.align 2
 driver_erase_bank:
-	xor ax, ax
 	test cl, 1
 	jnz driver_erase_bank_finish
 
@@ -411,16 +425,11 @@ driver_erase_bank:
 	mov byte ptr [bx], 0x30
 
 deb_driver_flash_busyloop_until_done:
-	nop
-	nop
-	nop
-	mov ah, byte ptr [bx]
-	nop
-	nop
-	nop
 	mov al, byte ptr [bx]
-	cmp ah, al // DQ2 and/or DQ6 toggles if status register
+	cmp al, byte ptr [bx] // DQ2 and/or DQ6 toggles if status register
 	jne deb_driver_flash_busyloop_until_done
+
+	call _driver_reset_flash
 
 	call _driver_unswitch_slot_sram
 
@@ -432,6 +441,7 @@ driver_erase_bank_finish:
 	mov al, 1
 	ASM_PLATFORM_RET
 
+	.align 2
 # check if the slot was correctly remounted
 # this is pretty bare-bones and could be better
 # clobbers ax
@@ -472,7 +482,7 @@ driver_emergency_error_handler_hex2int:
 hex2int_write:
 	add al, 48
 	cmp al, 58
-	jl hex2int_09
+	jb hex2int_09
 	add al, 7
 hex2int_09:
 	stosw
@@ -497,6 +507,9 @@ _end:
 	cli
 	xor ax, ax
 	out 0xB2, al
+	// lock IEEPROM
+	mov al, 0x80
+	out 0xBE, ax
 _end_loop:
 	hlt
 	jmp _end_loop

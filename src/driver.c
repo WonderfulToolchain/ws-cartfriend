@@ -16,13 +16,13 @@
  */
 
 #include <string.h>
+#include <wonderful.h>
 #include <ws.h>
 #include "driver.h"
 #include "settings.h"
 #include "util.h"
-#include "ws/hardware.h"
 
-static void clear_registers(void) {
+static void clear_registers(bool disable_color_mode) {
     // wait for vblank, disable display, reset some registers
     wait_for_vblank();
     cpu_irq_disable();
@@ -54,7 +54,7 @@ void launch_slot(uint16_t slot, uint16_t bank) {
     settings_save();
 
     driver_unlock();
-    clear_registers();
+    clear_registers(true);
 
     driver_launch_slot(0, slot, bank);
 }
@@ -64,6 +64,6 @@ extern void launch_ram_asm(const void __far *ptr);
 void launch_ram(const void __far *ptr) {
     settings_save();
 
-    clear_registers();
+    clear_registers(FP_SEG(ptr) < 0x0400);
     launch_ram_asm(ptr);
 }

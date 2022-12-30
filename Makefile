@@ -7,7 +7,7 @@ OBJDIR := obj
 MKDIRS := $(OBJDIR)
 LIBS := -lws -lc -lgcc
 CFLAGS += -Os -fno-jump-tables -fno-function-sections
-SLFLAGS := --heap-length 0x1800 --rtc --color --rom-size 2 --ram-type SRAM_512KB
+SLFLAGS := --heap-length 0x1800 --rtc --color --rom-size 2 --ram-type SRAM_512KB --unlock-ieep
 
 SRCDIRS := res src
 CSOURCES := $(foreach dir,$(SRCDIRS),$(notdir $(wildcard $(dir)/*.c)))

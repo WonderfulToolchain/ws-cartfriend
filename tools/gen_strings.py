@@ -27,6 +27,8 @@ for fn in glob.glob("lang//*.properties"):
 		for i in fp_i:
 			property_langs[lang_key] = True
 			i: str = i.rstrip("\n")
+			if i.startswith("#"):
+				continue
 			if "=" in i:
 				kv = i.split("=", maxsplit=1)
 				if kv[0] not in properties:

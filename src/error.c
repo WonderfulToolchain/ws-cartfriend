@@ -7,6 +7,7 @@
 
 void error_critical(uint16_t code, uint16_t extra) {
     ui_reset_main_screen();
+    outportw(IO_IEEP_CTRL, IEEP_PROTECT);
 
     ui_printf_centered(false, 2, 0, lang_keys[LK_UI_ERROR], code, extra);
     ui_puts_centered(false, 11, 0, lang_keys[LK_UI_ERROR_DESC_LINE1]);

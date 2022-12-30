@@ -19,3 +19,5 @@
 #define FLASH_CONFIG_SIZE 1024
 #define GAME_SLOTS 16
 #define SRAM_SLOTS 15
+
+// #define USE_LOW_BATTERY_WARNING

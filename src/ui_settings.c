@@ -83,21 +83,27 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
 #define MENU_ADV_CART_AVR_DELAY 0
 #define MENU_ADV_FORCECARTSRAM 1
 #define MENU_ADV_BUFFERED_WRITES 2
+#define MENU_ADV_UNLOCK_IEEP 3
 
 static uint16_t __far ui_adv_lks[] = {
     LK_UI_SETTINGS_CART_AVR_DELAY,
     LK_UI_SETTINGS_FORCECARTSRAM,
-    LK_UI_SETTINGS_BUFFERED_WRITES
+    LK_UI_SETTINGS_BUFFERED_WRITES,
+    LK_UI_SETTINGS_UNLOCK_IEEP
 };
+
+static void build_line_yesno(bool yes, char *buf_right, int buf_right_len) {
+    strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
+}
 
 static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     strncpy(buf, lang_keys[ui_adv_lks[entry_id]], buf_len);
     if (entry_id == MENU_ADV_FORCECARTSRAM) {
-        bool yes = settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT;
-        strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
+        build_line_yesno(settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT, buf_right, buf_right_len);
     } else if (entry_id == MENU_ADV_BUFFERED_WRITES) {
-        bool yes = !(settings_local.flags1 & SETT_FLAGS1_DISABLE_BUFFERED_WRITES);
-        strncpy(buf_right, lang_keys[yes ? LK_CONFIG_YES : LK_CONFIG_NO], buf_right_len);
+        build_line_yesno(!(settings_local.flags1 & SETT_FLAGS1_DISABLE_BUFFERED_WRITES), buf_right, buf_right_len);
+    } else if (entry_id == MENU_ADV_UNLOCK_IEEP) {
+        build_line_yesno(settings_local.flags1 & SETT_FLAGS1_UNLOCK_IEEP_NEXT_BOOT, buf_right, buf_right_len);
     } else if (entry_id == MENU_ADV_CART_AVR_DELAY) {
         npf_snprintf(buf_right, buf_right_len, lang_keys[LK_UI_D_MS], (uint16_t) settings_local.avr_cart_delay);
     }
@@ -180,6 +186,7 @@ static void ui_settings_advanced(uint8_t *menu_list) {
     menu_list[i++] = MENU_ADV_FORCECARTSRAM;
     menu_list[i++] = MENU_ADV_BUFFERED_WRITES;
     // menu_list[i++] = MENU_ADV_CART_AVR_DELAY;
+    menu_list[i++] = MENU_ADV_UNLOCK_IEEP;
     menu_list[i++] = MENU_ENTRY_END;
 
     ui_menu_state_t menu = {
@@ -202,6 +209,10 @@ Reselect:
         }
     } else if (result == MENU_ADV_BUFFERED_WRITES) {
         settings_local.flags1 ^= SETT_FLAGS1_DISABLE_BUFFERED_WRITES;
+        settings_mark_changed();
+        goto Reselect;
+    } else if (result == MENU_ADV_UNLOCK_IEEP) {
+        settings_local.flags1 ^= SETT_FLAGS1_UNLOCK_IEEP_NEXT_BOOT;
         settings_mark_changed();
         goto Reselect;
     } /* else if (result == MENU_ADV_CART_AVR_DELAY) {
