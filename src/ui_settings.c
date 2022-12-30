@@ -126,7 +126,7 @@ static uint8_t ui_savemap_next(uint8_t slot) {
 }
 
 static uint8_t ui_savemap_prev(uint8_t slot) {
-    for (uint8_t i = slot == 0xFF ? GAME_SLOTS : (slot - 1); i >= 0; i--) {
+    for (uint8_t i = slot == 0xFF ? GAME_SLOTS : (slot - 1); i != 0xFF; i--) {
         if (settings_local.slot_type[i] == SLOT_TYPE_SOFT || settings_local.slot_type[i] == SLOT_TYPE_MULTILINEAR_SOFT) {
             return i;
         }
