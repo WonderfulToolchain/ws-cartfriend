@@ -44,7 +44,7 @@ static void ui_browse_menu_build_line(uint8_t entry_id, void *userdata, char *bu
 
     if (entry_id < 128) {
         if (entry_id < GAME_SLOTS && settings_local.slot_name[entry_id][0] >= 0x20) {
-            memcpy(buf_name, settings_local.slot_name[entry_id] + 1, 23);
+            _nmemcpy(buf_name, settings_local.slot_name[entry_id] + 1, 23);
             buf_name[23] = 0;
         } else if (settings_local.flags1 & SETT_FLAGS1_HIDE_SLOT_IDS) {
             buf_name[0] = 0;
@@ -114,7 +114,7 @@ static uint8_t iterate_carts(uint8_t *menu_list, uint8_t *cart_metadata, uint8_t
 
         int16_t bank = 0xFF;
         while (bank >= 0x80) {
-            memset(buffer, 0xFF, sizeof(buffer));
+            _nmemset(buffer, 0xFF, sizeof(buffer));
             if (ui_read_rom_header(buffer, slot, bank)) {
                 if (is_valid_rom_header(buffer)) {
                     uint8_t entry_id = slot | ((bank & 0xF0) ^ 0xF0);
@@ -273,7 +273,7 @@ void ui_browse(void) {
         if (subaction == BROWSE_SUB_LAUNCH) {
             ui_reset_main_screen();
 
-            memset(menu_list, 0xFF, 16);
+            _nmemset(menu_list, 0xFF, 16);
             ui_read_rom_header_from_entry(menu_list, result);
 
             // does the game use save data?
@@ -323,10 +323,10 @@ void ui_browse(void) {
                 if (settings_local.slot_name[result][0] < 0x20) {
                     menu_list[0] = 0;
                 } else {
-                    memcpy(menu_list, settings_local.slot_name[result] + 1, 23);
+                    _nmemcpy(menu_list, settings_local.slot_name[result] + 1, 23);
                 }
                 if (ui_osk_run(0, (char*) menu_list, 23)) {
-                    memset(settings_local.slot_name[result], 0, 24);
+                    _nmemset(settings_local.slot_name[result], 0, 24);
                     if (menu_list[0] != 0) {
                         settings_local.slot_name[result][0] = 0x20;
                         strncpy((char*) (settings_local.slot_name[result] + 1), (char*) menu_list, 23);

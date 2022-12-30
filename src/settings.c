@@ -38,7 +38,7 @@ bool settings_changed;
 const char __far settings_magic[4] = {'w', 'f', 'C', 'F'};
 
 void settings_reset(void) {
-    memset(((uint8_t*) &settings_local) + sizeof(settings_magic), 0, sizeof(settings_local) - sizeof(settings_magic));
+    _nmemset(((uint8_t*) &settings_local) + sizeof(settings_magic), 0, sizeof(settings_local) - sizeof(settings_magic));
     memcpy(settings_local.magic, settings_magic, sizeof(settings_magic));
     settings_local.version = SETTINGS_VERSION;
 
@@ -112,7 +112,7 @@ void settings_load(void) {
     if (driver_get_launch_slot() != 0xFF) {
         settings_slot = MAX_SETTINGS_SLOT;
         while (settings_slot <= MAX_SETTINGS_SLOT) {
-            memset(&settings_local, 0, 6);
+            _nmemset(&settings_local, 0, 6);
             driver_read_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), settings_slot << 10, 6);
 
             if (!memcmp(settings_magic, &settings_local, 4)) {

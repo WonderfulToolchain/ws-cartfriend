@@ -178,7 +178,7 @@ void ui_reset_main_screen(void) {
     scroll_y = 0;
     outportb(IO_SCR1_SCRL_X, 4);
     outportb(IO_SCR1_SCRL_Y, 248);
-    memset(SCREEN1, 0, 0x800);
+    _nmemset(SCREEN1, 0, 0x800);
 }
 
 void ui_scroll(int8_t offset) {

@@ -28,7 +28,7 @@ static void clear_registers(void) {
     cpu_irq_disable();
 
     if (ws_system_color_active()) {
-        memset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
+        _nmemset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
         ws_mode_set(WS_MODE_MONO);
     }
 
