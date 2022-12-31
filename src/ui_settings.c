@@ -84,12 +84,14 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
 #define MENU_ADV_FORCECARTSRAM 1
 #define MENU_ADV_BUFFERED_WRITES 2
 #define MENU_ADV_UNLOCK_IEEP 3
+#define MENU_ADV_SERIAL_RATE 4
 
 static uint16_t __far ui_adv_lks[] = {
     LK_UI_SETTINGS_CART_AVR_DELAY,
     LK_UI_SETTINGS_FORCECARTSRAM,
     LK_UI_SETTINGS_BUFFERED_WRITES,
-    LK_UI_SETTINGS_UNLOCK_IEEP
+    LK_UI_SETTINGS_UNLOCK_IEEP,
+    LK_UI_SETTINGS_SERIAL_RATE
 };
 
 static void build_line_yesno(bool yes, char *buf_right, int buf_right_len) {
@@ -104,6 +106,9 @@ static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
         build_line_yesno(!(settings_local.flags1 & SETT_FLAGS1_DISABLE_BUFFERED_WRITES), buf_right, buf_right_len);
     } else if (entry_id == MENU_ADV_UNLOCK_IEEP) {
         build_line_yesno(settings_local.flags1 & SETT_FLAGS1_UNLOCK_IEEP_NEXT_BOOT, buf_right, buf_right_len);
+    } else if (entry_id == MENU_ADV_SERIAL_RATE) {
+        bool is9600 = settings_local.flags1 & SETT_FLAGS1_SERIAL_9600BPS;
+        strncpy(buf_right, lang_keys[is9600 ? LK_UI_SETTINGS_SERIAL_RATE_9600 : LK_UI_SETTINGS_SERIAL_RATE_38400], buf_right_len);
     } else if (entry_id == MENU_ADV_CART_AVR_DELAY) {
         npf_snprintf(buf_right, buf_right_len, lang_keys[LK_UI_D_MS], (uint16_t) settings_local.avr_cart_delay);
     }
@@ -183,9 +188,10 @@ static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, 
 
 static void ui_settings_advanced(uint8_t *menu_list) {
     uint8_t i = 0;
-    menu_list[i++] = MENU_ADV_FORCECARTSRAM;
     menu_list[i++] = MENU_ADV_BUFFERED_WRITES;
+    menu_list[i++] = MENU_ADV_SERIAL_RATE;
     // menu_list[i++] = MENU_ADV_CART_AVR_DELAY;
+    menu_list[i++] = MENU_ADV_FORCECARTSRAM;
     menu_list[i++] = MENU_ADV_UNLOCK_IEEP;
     menu_list[i++] = MENU_ENTRY_END;
 
@@ -206,6 +212,8 @@ Reselect:
                 settings_local.active_sram_slot = 0xFE;
                 settings_mark_changed();
             }
+        } else {
+            goto Reselect;
         }
     } else if (result == MENU_ADV_BUFFERED_WRITES) {
         settings_local.flags1 ^= SETT_FLAGS1_DISABLE_BUFFERED_WRITES;
@@ -213,6 +221,10 @@ Reselect:
         goto Reselect;
     } else if (result == MENU_ADV_UNLOCK_IEEP) {
         settings_local.flags1 ^= SETT_FLAGS1_UNLOCK_IEEP_NEXT_BOOT;
+        settings_mark_changed();
+        goto Reselect;
+    } else if (result == MENU_ADV_SERIAL_RATE) {
+        settings_local.flags1 ^= SETT_FLAGS1_SERIAL_9600BPS;
         settings_mark_changed();
         goto Reselect;
     } /* else if (result == MENU_ADV_CART_AVR_DELAY) {

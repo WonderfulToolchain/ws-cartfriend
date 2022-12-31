@@ -16,6 +16,12 @@
  */
 
 #include <ws.h>
+#include "settings.h"
+#include "xmodem.h"
+
+void xmodem_open_default(void) {
+    xmodem_open((settings_local.flags1 & SETT_FLAGS1_SERIAL_9600BPS) ? SERIAL_BAUD_9600 : SERIAL_BAUD_38400);
+}
 
 // it's an uint16_t but we only want the low byte
 extern volatile uint8_t vbl_ticks;

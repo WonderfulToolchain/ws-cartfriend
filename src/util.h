@@ -19,6 +19,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+void xmodem_open_default(void);
+
 void wait_for_vblank(void);
 
 int u8_arraylist_len(uint8_t *list);

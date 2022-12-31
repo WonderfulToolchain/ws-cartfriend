@@ -20,6 +20,7 @@
 #include <ws.h>
 #include "driver.h"
 #include "lang.h"
+#include "settings.h"
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
@@ -66,7 +67,7 @@ static void ui_tool_sramcode_xm() {
     uint16_t sram_incrs = 0;
     bool active = true;
 
-    xmodem_open(SERIAL_BAUD_38400);
+    xmodem_open_default();
     if (xmodem_recv_start() == XMODEM_OK) {
         ui_tool_xmodem_ui_message(LK_UI_XMODEM_IN_PROGRESS);
 
