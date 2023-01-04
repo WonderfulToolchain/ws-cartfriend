@@ -71,6 +71,10 @@ static void ui_browse_submenu_build_line(uint8_t entry_id, void *userdata, char 
     strncpy(buf, lang_keys[browse_sub_lks[entry_id]], buf_len);
 }
 
+static void ui_browse_save_select_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
+    npf_snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_USE_SRAM], entry_id + 'A');
+}
+
 static bool ui_read_rom_header(void *buffer, uint8_t slot, uint8_t bank) {
     return driver_read_slot(buffer, slot, bank, 0xFFF0, 16);
 }
@@ -288,6 +292,7 @@ void ui_browse(void) {
                 uint8_t sram_slot = 0xFF;
                 if (i > 1) {
                     menu_list[i++] = MENU_ENTRY_END;
+                    menu.build_line_func = ui_browse_save_select_build_line;
                     menu.flags = MENU_B_AS_BACK;
                     ui_menu_init(&menu);
                     uint16_t result_sram = ui_menu_select(&menu);

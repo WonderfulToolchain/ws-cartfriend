@@ -116,7 +116,7 @@ static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
 
 static void ui_opt_menu_savemap_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < SRAM_SLOTS) {
-        npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_SAVEMAP_SRAM_ACTIVE : LK_UI_SAVEMAP_SRAM], entry_id + 1);
+        npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_SAVEMAP_SRAM_ACTIVE : LK_UI_SAVEMAP_SRAM], entry_id + 'A');
         uint8_t sram_target = settings_local.sram_slot_mapping[entry_id];
         if (sram_target < GAME_SLOTS) {
             npf_snprintf(buf_right, buf_right_len, lang_keys[LK_UI_SAVEMAP_SLOT], sram_target + 1);
@@ -178,7 +178,7 @@ static uint8_t ui_slotmap_next(uint8_t slot, uint8_t delta) {
 
 static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < SRAM_SLOTS) {
-        npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_ERASE_BLOCK_ACTIVE : LK_UI_ERASE_BLOCK], entry_id + 1);
+        npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_ERASE_BLOCK_ACTIVE : LK_UI_ERASE_BLOCK], entry_id + 'A');
     } else if (entry_id == 0xEF) {
         strncpy(buf, lang_keys[LK_UI_ERASE_ALL_SAVE_DATA], buf_len);
     } else if (entry_id == 0xEE) {
