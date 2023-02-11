@@ -140,6 +140,7 @@ void settings_load(void) {
 
 void settings_refresh(void) {
 	ui_update_theme(settings_local.color_theme);
+    ui_set_current_tab(ui_current_tab);
 }
 
 void settings_mark_changed(void) {

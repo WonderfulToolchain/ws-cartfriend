@@ -35,6 +35,7 @@ const char __far* const __far* lang_keys;
 #ifdef USE_LOW_BATTERY_WARNING
 extern uint8_t ui_low_battery_flag;
 #endif
+#define MAIN_SCREEN_WIDTH ((settings_local.flags1 & SETT_FLAGS1_WIDE_SCREEN) ? 28 : 27)
 
 static const uint16_t __far theme_colorways[UI_THEME_COUNT][10] = {
     { // Light
@@ -191,7 +192,7 @@ void ui_hide(void) {
 
 void ui_reset_main_screen(void) {
     scroll_y = 0;
-    outportb(IO_SCR1_SCRL_X, 4);
+    outportb(IO_SCR1_SCRL_X, settings_local.flags1 & SETT_FLAGS1_WIDE_SCREEN ? 0 : 252);
     outportb(IO_SCR1_SCRL_Y, 248);
     _nmemset(SCREEN1, 0, 0x800);
 }
@@ -210,7 +211,7 @@ inline void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t
 void ui_fill_line(uint8_t y, uint8_t color) {
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = SCREEN1 + (y << 5);
-    for (uint8_t i = 0; i < 29; i++) {
+    for (uint8_t i = 0; i < 32; i++) {
         *(screen++) = prefix;
     }
 }
@@ -225,12 +226,12 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __
             continue;
         }
         ws_screen_put(screen, prefix | ((uint8_t) *(buf++)), x++, y);
-        if (x == 29) return;
+        if (x == 28) return;
     }
 }
 
 void ui_puts_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* buf) {
-    uint8_t x = ((alt_screen ? 28 : 29) - strlen(buf)) >> 1;
+    uint8_t x = ((alt_screen ? 28 : MAIN_SCREEN_WIDTH) - strlen(buf)) >> 1;
     ui_puts(alt_screen, x, y, color, buf);
 }
 
@@ -249,7 +250,7 @@ void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __
     va_start(val, format);
     npf_vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
-    uint8_t x = ((alt_screen ? 28 : 29) - strlen(buf)) >> 1;
+    uint8_t x = ((alt_screen ? 28 : MAIN_SCREEN_WIDTH) - strlen(buf)) >> 1;
     ui_puts(alt_screen, x, y, color, buf);
 }
 
@@ -388,7 +389,7 @@ void ui_clear_work_indicator(void) {
 
 static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color) {
     if (menu->list[pos] == MENU_ENTRY_DIVIDER) {
-        ws_screen_fill(SCREEN1, 196, 0, pos, 29, 1);
+        ws_screen_fill(SCREEN1, 196, 0, pos, 32, 1);
         return;
     }
 
@@ -398,10 +399,10 @@ static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color)
 
     menu->build_line_func(menu->list[pos], menu->build_line_data, buf, 30, buf_right, 30);
     if (buf[0] != 0) {
-        ui_puts(false, 1, pos, color, buf);
+        ui_puts(false, 0, pos, color, buf);
     }
     if (buf_right[0] != 0) {
-        ui_puts(false, 28 - strlen(buf_right), pos, color, buf_right);
+        ui_puts(false, MAIN_SCREEN_WIDTH - strlen(buf_right), pos, color, buf_right);
     }
 }
 

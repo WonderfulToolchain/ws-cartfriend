@@ -168,7 +168,7 @@ void ui_browse_info(uint8_t slot) {
         (uint16_t) rom_header[6],
         (uint16_t) rom_header[8],
         (uint16_t) rom_header[9]);
-    ui_printf(false, 1, 1, 0, lang_keys[LK_UI_BROWSE_INFO_ID], (const char __far*) buf);
+    ui_printf(false, 0, 1, 0, lang_keys[LK_UI_BROWSE_INFO_ID], (const char __far*) buf);
 
     if (rom_header[10] >= sizeof(rom_size_table)) {
         strncpy(buf, lang_keys[LK_UI_BROWSE_INFO_UNKNOWN], sizeof(buf));
@@ -177,10 +177,10 @@ void ui_browse_info(uint8_t slot) {
             (uint16_t) rom_size_table[rom_header[10]]);
     }
 
-    ui_printf(false, 1, 2, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_SIZE], (const char __far*) buf);
+    ui_printf(false, 0, 2, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_SIZE], (const char __far*) buf);
 
-    ui_puts(false, 1, 3, 0, lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE]);
-    uint8_t save_str_x = 2 + strlen(lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE]);
+    ui_puts(false, 0, 3, 0, lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE]);
+    uint8_t save_str_x = 1 + strlen(lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE]);
     uint8_t save_str_y = 3;
     if (rom_header[11] == 0x00) {
         ui_puts(false, save_str_x, save_str_y, 0, lang_keys[LK_UI_BROWSE_INFO_NONE]);
@@ -217,24 +217,24 @@ void ui_browse_info(uint8_t slot) {
         }
     }
 
-    ui_printf(false, 1, 5, 0, lang_keys[LK_UI_BROWSE_INFO_COLOR], (const char __far*) lang_keys[
+    ui_printf(false, 0, 5, 0, lang_keys[LK_UI_BROWSE_INFO_COLOR], (const char __far*) lang_keys[
         rom_header[7] > 1 ? LK_UI_BROWSE_INFO_UNKNOWN : (rom_header[7] ? LK_CONFIG_YES : LK_CONFIG_NO)
     ]);
-    ui_printf(false, 1, 6, 0, lang_keys[LK_UI_BROWSE_INFO_ORIENTATION], (const char __far*) lang_keys[
+    ui_printf(false, 0, 6, 0, lang_keys[LK_UI_BROWSE_INFO_ORIENTATION], (const char __far*) lang_keys[
         rom_header[12] & 0x01 ? LK_UI_BROWSE_INFO_VERTICAL : LK_UI_BROWSE_INFO_HORIZONTAL
     ]);
 
-    ui_printf(false, 1, 8, 0, lang_keys[LK_UI_BROWSE_INFO_RTC], (const char __far*) lang_keys[
+    ui_printf(false, 0, 8, 0, lang_keys[LK_UI_BROWSE_INFO_RTC], (const char __far*) lang_keys[
         rom_header[13] & 0x01 ? LK_CONFIG_YES : LK_CONFIG_NO
     ]);
-    ui_printf(false, 1, 9, 0, lang_keys[LK_UI_BROWSE_INFO_EEPROM], (const char __far*) lang_keys[
+    ui_printf(false, 0, 9, 0, lang_keys[LK_UI_BROWSE_INFO_EEPROM], (const char __far*) lang_keys[
         rom_header[9] & 0x80 ? LK_CONFIG_YES : LK_CONFIG_NO
     ]);
 
-    ui_puts(false, 1, 11, 0, lang_keys[(rom_header[12] & 0x04) ? LK_UI_BROWSE_INFO_ROM_SPEED_1 : LK_UI_BROWSE_INFO_ROM_SPEED_3]);
-    ui_printf(false, 1, 12, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_BUS_SIZE], (uint16_t) ((rom_header[12] & 0x02) ? 8 : 16));
+    ui_puts(false, 0, 11, 0, lang_keys[(rom_header[12] & 0x04) ? LK_UI_BROWSE_INFO_ROM_SPEED_1 : LK_UI_BROWSE_INFO_ROM_SPEED_3]);
+    ui_printf(false, 0, 12, 0, lang_keys[LK_UI_BROWSE_INFO_ROM_BUS_SIZE], (uint16_t) ((rom_header[12] & 0x02) ? 8 : 16));
 
-    ui_printf(false, 1, 14, 0, lang_keys[LK_UI_BROWSE_INFO_CHECKSUM], (uint16_t) rom_header[15], (uint16_t) rom_header[14]);
+    ui_printf(false, 0, 14, 0, lang_keys[LK_UI_BROWSE_INFO_CHECKSUM], (uint16_t) rom_header[15], (uint16_t) rom_header[14]);
 
     while (ui_poll_events()) {
         wait_for_vblank();

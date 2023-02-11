@@ -37,7 +37,8 @@ typedef enum {
     MENU_OPT_HIDE_SLOT_IDS,
     MENU_OPT_REVERTSETTINGS,
     MENU_OPT_ADVANCED,
-    MENU_OPT_LANGUAGE
+    MENU_OPT_LANGUAGE,
+    MENU_OPT_TEXT_WIDTH
 } ui_opt_id_t;
 
 static uint16_t __far ui_lang_lks[] = {
@@ -56,7 +57,8 @@ static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_HIDE_SLOT_IDS,
     LK_UI_SETTINGS_REVERT,
     LK_UI_SETTINGS_ADVANCED,
-    LK_UI_SETTINGS_LANGUAGE
+    LK_UI_SETTINGS_LANGUAGE,
+    LK_UI_SETTINGS_TEXT_WIDTH
 };
 
 static uint16_t __far ui_theme_color_lks[] = {
@@ -81,6 +83,8 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
             }
         } else if (entry_id == MENU_OPT_LANGUAGE) {
             strncpy(buf_right, lang_keys[ui_lang_lks[settings_local.language]], buf_right_len);
+        } else if (entry_id == MENU_OPT_TEXT_WIDTH) {
+            strncpy(buf_right, lang_keys[(settings_local.flags1 & SETT_FLAGS1_WIDE_SCREEN) ? LK_WIDTH_WIDE : LK_WIDTH_NARROW], buf_right_len);
         }
 
         if (entry_id == MENU_OPT_SLOTMAP || entry_id == MENU_OPT_SAVEMAP || entry_id == MENU_OPT_SAVE_MANAGEMENT || entry_id == MENU_OPT_ADVANCED) {
@@ -252,6 +256,7 @@ void ui_settings(void) {
     uint8_t menu_list[32];
     uint8_t i = 0;
     menu_list[i++] = MENU_OPT_THEME;
+    menu_list[i++] = MENU_OPT_TEXT_WIDTH;
     menu_list[i++] = MENU_OPT_LANGUAGE;
 #ifdef USE_SLOT_SYSTEM
     menu_list[i++] = MENU_OPT_HIDE_SLOT_IDS;
@@ -396,10 +401,14 @@ SaveMgmtReselect:
         settings_mark_changed();
         ui_update_theme(settings_local.color_theme);
         goto Reselect;
+    } else if (result == MENU_OPT_TEXT_WIDTH) {
+        settings_local.flags1 ^= SETT_FLAGS1_WIDE_SCREEN;
+        settings_refresh();
+        ui_reset_main_screen();
+        goto Reselect;
     } else if (result == MENU_OPT_LANGUAGE) {
         settings_local.language = ui_set_language(settings_local.language + 1);
-        settings_mark_changed();
-        ui_set_current_tab(ui_current_tab);
+        settings_refresh();
         ui_reset_main_screen();
         goto Reselect;
     } else if (result == MENU_OPT_SAVE) {
