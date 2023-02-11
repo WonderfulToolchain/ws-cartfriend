@@ -28,6 +28,7 @@
 #include "nanoprintf.h"
 #include "util.h"
 #include "ws/display.h"
+#include "ws/hardware.h"
 #include "ws/system.h"
 
 const char __far* const __far* lang_keys;
@@ -315,9 +316,11 @@ void ui_set_current_tab(uint8_t tab) {
 
 void ui_update_indicators(void) {
     ui_putc(true, 0, 17, settings_local.active_sram_slot < SRAM_SLOTS ? UI_GLYPH_SRAM_ACTIVE : 0, 2);
+    // 1, 17 - low battery glyph (set elsewherer)
 #ifdef USE_SLOT_SYSTEM
     ui_putc(true, 2, 17, settings_changed ? UI_GLYPH_SETTINGS_CHANGED : 0, 2);
 #endif
+    ui_putc(true, 3, 17, (inportb(IO_IEEP_CTRL) & IEEP_PROTECT) ? UI_GLYPH_EEPROM_UNLOCKED : 0, 2);
 }
 
 bool ui_poll_events(void) {

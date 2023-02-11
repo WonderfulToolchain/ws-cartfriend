@@ -57,6 +57,7 @@ void ui_update_theme(uint8_t current_theme);
 #define UI_GLYPH_ARROW_RIGHT 16
 #define UI_GLYPH_ARROW_LEFT 17
 #define UI_GLYPH_SETTINGS_CHANGED 20 // 2, 17
+#define UI_GLYPH_EEPROM_UNLOCKED 21 // 3, 17
 #define UI_GLYPH_SPACE_BAR_ICON 28
 #define UI_GLYPH_TRIANGLE_UR 169
 #define UI_GLYPH_TRIANGLE_UL 170
