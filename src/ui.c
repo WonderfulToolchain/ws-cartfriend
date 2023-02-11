@@ -285,7 +285,7 @@ void ui_set_current_tab(uint8_t tab) {
     
     while (x < 28) {
         if (text != NULL && ((*text) != 0)) {
-            ui_putc(true, x++, 0, *(text++), active ? 3 : 2);
+            ui_putc(true, x++, 0, (uint8_t) *(text++), active ? 3 : 2);
         } else if (finished) {
             ui_putc(true, x++, 0, 0, 2);
         } else if (*text == 0) {

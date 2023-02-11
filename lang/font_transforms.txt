@@ -1,2 +1,8 @@
 # from	to	at	locales
-0	7E	0	*
+00	7E	00	*
+DC	DC	9A	de
+FC	FC	81	de
+F6	F6	94	de
+C4	C4	8E	de
+E4	E4	84	de
+DF	DF	06	de
