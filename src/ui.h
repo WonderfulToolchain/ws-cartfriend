@@ -20,6 +20,10 @@
 #include <stdint.h>
 #include "../res/lang.h"
 
+#define UI_LANGUAGE_EN 0
+#define UI_LANGUAGE_PL 1
+#define UI_LANGUAGE_MAX 2
+
 #define UI_PAL_MAIN    0
 #define UI_PAL_MAINI   1
 #define UI_PAL_BAR     2
@@ -51,6 +55,7 @@ __attribute__((format(printf, 5, 6))) void ui_printf_right(bool alt_screen, uint
 
 #define UI_THEME_COUNT 3
 void ui_update_theme(uint8_t current_theme);
+uint8_t ui_set_language(uint8_t id);
 
 #define UI_GLYPH_LOW_BATTERY 8 // 1, 17
 #define UI_GLYPH_SRAM_ACTIVE 10 // 0, 17

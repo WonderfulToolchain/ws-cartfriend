@@ -14,7 +14,10 @@
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from pathlib import Path
-import glob, os, re, sys
+import glob, os, re, sys, unicodedata
+
+def strip_accents(txt):
+	return unicodedata.normalize("NFD", txt).encode("ascii", "ignore").decode("utf-8")
 
 properties = {}
 property_langs = {}
@@ -33,7 +36,8 @@ for fn in glob.glob("lang//*.properties"):
 				kv = i.split("=", maxsplit=1)
 				if kv[0] not in properties:
 					properties[kv[0]] = {}
-				properties[kv[0]][lang_key] = kv[1]
+				val = strip_accents(kv[1])
+				properties[kv[0]][lang_key] = val
 				if lang_key == "en":
 					property_keys[kv[0]] = property_idx
 					property_idx += 1

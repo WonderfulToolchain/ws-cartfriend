@@ -26,15 +26,11 @@
 #define SLOT_TYPE_APPENDED_FILES 3 /* Tentative */
 #define SLOT_TYPE_UNUSED 0xFF
 
-#define SETTINGS_VERSION 4
+#define SETTINGS_VERSION 5
 
 #define SRAM_SLOT_ALL 0xFD
 #define SRAM_SLOT_FIRST_BOOT 0xFE
 #define SRAM_SLOT_NONE 0xFF
-
-#define DEFAULT_AVR_CART_DELAY 15
-#define MINIMUM_AVR_CART_DELAY 10
-#define MAXIMUM_AVR_CART_DELAY 50
 
 typedef struct __attribute__((packed)) {
 	uint8_t magic[4];
@@ -49,7 +45,7 @@ typedef struct __attribute__((packed)) {
 	uint8_t slot_name[GAME_SLOTS][24]; // 423
 
 	uint8_t flags1; // 424
-	uint8_t avr_cart_delay; // 425
+	uint8_t language; // 425
 } settings_t;
 
 #define SETT_FLAGS1_HIDE_SLOT_IDS 0x01

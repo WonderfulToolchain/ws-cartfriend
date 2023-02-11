@@ -61,7 +61,6 @@ void settings_reset(void) {
         settings_local.sram_slot_mapping[sram_slot++] = 0xFF;
     }
     settings_local.active_sram_slot = SRAM_SLOT_FIRST_BOOT;
-    settings_local.avr_cart_delay = DEFAULT_AVR_CART_DELAY;
     settings_local.color_theme = 0x02;
 
     settings_changed = true;
@@ -94,8 +93,8 @@ static void settings_migrate(void) {
         settings_local.flags1 = 0;
     }
 
-    if (settings_local.version < 4) {
-        settings_local.avr_cart_delay = DEFAULT_AVR_CART_DELAY;
+    if (settings_local.version < 5) {
+        settings_local.language = 0;
     }
 
     settings_local.version = SETTINGS_VERSION;
@@ -135,10 +134,6 @@ void settings_load(void) {
         settings_reset();
     } else {
         settings_migrate();
-    }
-
-    if (settings_local.avr_cart_delay < MINIMUM_AVR_CART_DELAY) {
-        settings_local.avr_cart_delay = DEFAULT_AVR_CART_DELAY;
     }
 #endif
 }

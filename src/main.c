@@ -52,8 +52,6 @@ void main(void) {
 	ws_hwint_enable(HWINT_VBLANK);
 	cpu_irq_enable();
 
-	settings_local.avr_cart_delay = DEFAULT_AVR_CART_DELAY;
-
 	ui_init();
 	driver_init();
 

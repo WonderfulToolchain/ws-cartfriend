@@ -131,6 +131,15 @@ void ui_reset_alt_screen(void) {
     }
 }
 
+uint8_t ui_set_language(uint8_t id) {
+    id %= UI_LANGUAGE_MAX;
+    switch (id) {
+    case UI_LANGUAGE_EN: lang_keys = lang_keys_en; break;
+    case UI_LANGUAGE_PL: lang_keys = lang_keys_pl; break;
+    }
+    return id;
+}
+
 void ui_init(void) {
     lang_keys = lang_keys_en;
 #ifdef USE_LOW_BATTERY_WARNING
@@ -273,7 +282,6 @@ void ui_set_current_tab(uint8_t tab) {
 
     ui_current_tab = tab;
     
-
     while (x < 28) {
         if (text != NULL && ((*text) != 0)) {
             ui_putc(true, x++, 0, *(text++), active ? 3 : 2);

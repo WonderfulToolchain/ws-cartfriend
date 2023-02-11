@@ -27,27 +27,35 @@
 #include "util.h"
 #include "ws/system.h"
 
-#define MENU_OPT_SAVEMAP 0
-#define MENU_OPT_SAVE 1
-#define MENU_OPT_SAVE_MANAGEMENT 2
-#define MENU_OPT_THEME 4
-#define MENU_OPT_SLOTMAP 5
-#define MENU_OPT_UNLOAD_SRAM 6
-#define MENU_OPT_HIDE_SLOT_IDS 7
-#define MENU_OPT_REVERTSETTINGS 8
-#define MENU_OPT_ADVANCED 9
+typedef enum {
+    MENU_OPT_SAVEMAP,
+    MENU_OPT_SAVE,
+    MENU_OPT_SAVE_MANAGEMENT,
+    MENU_OPT_THEME,
+    MENU_OPT_SLOTMAP,
+    MENU_OPT_UNLOAD_SRAM,
+    MENU_OPT_HIDE_SLOT_IDS,
+    MENU_OPT_REVERTSETTINGS,
+    MENU_OPT_ADVANCED,
+    MENU_OPT_LANGUAGE
+} ui_opt_id_t;
+
+static uint16_t __far ui_lang_lks[] = {
+    LK_LANG_EN,
+    LK_LANG_PL
+};
 
 static uint16_t __far ui_opt_lks[] = {
     LK_UI_SETTINGS_SAVEMAP,
     LK_UI_SETTINGS_SAVE,
     LK_UI_SETTINGS_SAVE_MANAGEMENT,
-    LK_UI_SETTINGS_FORCECARTSRAM,
     LK_UI_SETTINGS_THEME,
     LK_UI_SETTINGS_SLOTMAP,
     LK_UI_SETTINGS_UNLOAD_SRAM,
     LK_UI_SETTINGS_HIDE_SLOT_IDS,
     LK_UI_SETTINGS_REVERT,
-    LK_UI_SETTINGS_ADVANCED
+    LK_UI_SETTINGS_ADVANCED,
+    LK_UI_SETTINGS_LANGUAGE
 };
 
 static uint16_t __far ui_theme_color_lks[] = {
@@ -70,6 +78,8 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
             } else {
                 strncpy(buf_right, lang_keys[(settings_local.color_theme & 0x80) ? LK_THEME_M1 : LK_THEME_M0], buf_right_len);
             }
+        } else if (entry_id == MENU_OPT_LANGUAGE) {
+            strncpy(buf_right, lang_keys[ui_lang_lks[settings_local.language]], buf_right_len);
         }
 
         if (entry_id == MENU_OPT_SLOTMAP || entry_id == MENU_OPT_SAVEMAP || entry_id == MENU_OPT_SAVE_MANAGEMENT || entry_id == MENU_OPT_ADVANCED) {
@@ -80,14 +90,14 @@ static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
     }
 }
 
-#define MENU_ADV_CART_AVR_DELAY 0
-#define MENU_ADV_FORCECARTSRAM 1
-#define MENU_ADV_BUFFERED_WRITES 2
-#define MENU_ADV_UNLOCK_IEEP 3
-#define MENU_ADV_SERIAL_RATE 4
+typedef enum {
+    MENU_ADV_FORCECARTSRAM,
+    MENU_ADV_BUFFERED_WRITES,
+    MENU_ADV_UNLOCK_IEEP,
+    MENU_ADV_SERIAL_RATE
+} ui_adv_id_t;
 
 static uint16_t __far ui_adv_lks[] = {
-    LK_UI_SETTINGS_CART_AVR_DELAY,
     LK_UI_SETTINGS_FORCECARTSRAM,
     LK_UI_SETTINGS_BUFFERED_WRITES,
     LK_UI_SETTINGS_UNLOCK_IEEP,
@@ -109,8 +119,6 @@ static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
     } else if (entry_id == MENU_ADV_SERIAL_RATE) {
         bool is9600 = settings_local.flags1 & SETT_FLAGS1_SERIAL_9600BPS;
         strncpy(buf_right, lang_keys[is9600 ? LK_UI_SETTINGS_SERIAL_RATE_9600 : LK_UI_SETTINGS_SERIAL_RATE_38400], buf_right_len);
-    } else if (entry_id == MENU_ADV_CART_AVR_DELAY) {
-        npf_snprintf(buf_right, buf_right_len, lang_keys[LK_UI_D_MS], (uint16_t) settings_local.avr_cart_delay);
     }
 }
 
@@ -243,6 +251,7 @@ void ui_settings(void) {
     uint8_t menu_list[32];
     uint8_t i = 0;
     menu_list[i++] = MENU_OPT_THEME;
+    menu_list[i++] = MENU_OPT_LANGUAGE;
 #ifdef USE_SLOT_SYSTEM
     menu_list[i++] = MENU_OPT_HIDE_SLOT_IDS;
 #endif
@@ -385,6 +394,12 @@ SaveMgmtReselect:
         }
         settings_mark_changed();
         ui_update_theme(settings_local.color_theme);
+        goto Reselect;
+    } else if (result == MENU_OPT_LANGUAGE) {
+        settings_local.language = ui_set_language(settings_local.language + 1);
+        settings_mark_changed();
+        ui_set_current_tab(ui_current_tab);
+        ui_reset_main_screen();
         goto Reselect;
     } else if (result == MENU_OPT_SAVE) {
         settings_save();

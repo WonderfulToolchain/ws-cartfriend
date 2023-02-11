@@ -1,0 +1,2 @@
+# from	to	at	locales
+0	7E	0	*
