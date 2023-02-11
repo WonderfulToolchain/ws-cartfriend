@@ -33,7 +33,3 @@ uint8_t driver_get_launch_slot(void) {
     // return (_CS < 0x2000) ? 0xFF : fm_initial_slot;
     return 0; // TODO
 }
-
-bool driver_supports_slots(void) {
-    return true;
-}

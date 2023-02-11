@@ -16,11 +16,13 @@
  */
 
 #include "wonderful-asm.h"
+#include "config.h"
 
 	.arch	i186
 	.code16
 	.intel_syntax noprefix
 
+#ifdef USE_SLOT_SYSTEM
 	.global sram_copy_buffer_checkff
 sram_copy_buffer_checkff:
 	push	si
@@ -65,3 +67,4 @@ sram_copy_buffer_checkff_loop_done:
 	pop	di
 	pop	si
 	ASM_PLATFORM_RET
+#endif

@@ -34,7 +34,6 @@ bool driver_write_slot(const void *data, uint16_t slot, uint16_t bank, uint16_t 
 bool driver_erase_bank(uint16_t unused, uint16_t slot, uint16_t bank);
 void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank); // unlock first, lock in function 
 uint8_t driver_get_launch_slot(void);
-bool driver_supports_slots(void);
 
 void launch_slot(uint16_t slot, uint16_t bank); // unlocks automatically
 void launch_ram(const void __far* ptr);

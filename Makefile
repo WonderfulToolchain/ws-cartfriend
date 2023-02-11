@@ -3,51 +3,34 @@ $(error Please define WONDERFUL_TOOLCHAIN to point to the location of the Wonder
 endif
 include $(WONDERFUL_TOOLCHAIN)/i8086/wswan.mk
 
-OBJDIR := obj
+TARGET ?= generic
+
+OBJDIR := obj/$(TARGET)
 MKDIRS := $(OBJDIR)
 LIBS := -lws -lc -lgcc
-CFLAGS += -Os -fno-jump-tables -fno-function-sections
+CFLAGS += -Os -fno-jump-tables -ffunction-sections
 SLFLAGS := --heap-length 0x1800 --rtc --color --rom-size 2 --ram-type SRAM_512KB --unlock-ieep
+LDFLAGS += -Wl,--gc-sections
 
-SRCDIRS := res src
+SRCDIRS := res src src/$(TARGET)
 CSOURCES := $(foreach dir,$(SRCDIRS),$(notdir $(wildcard $(dir)/*.c)))
 ASMSOURCES := $(foreach dir,$(SRCDIRS),$(notdir $(wildcard $(dir)/*.S)))
 OBJECTS := $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.S=$(OBJDIR)/%.o)
 
-SRCDIRS_STUB := src/stub
-CSOURCES_STUB := $(foreach dir,$(SRCDIRS_STUB),$(notdir $(wildcard $(dir)/*.c)))
-ASMSOURCES_STUB := $(foreach dir,$(SRCDIRS_STUB),$(notdir $(wildcard $(dir)/*.S)))
-OBJECTS_STUB := $(CSOURCES_STUB:%.c=$(OBJDIR)/%.o) $(ASMSOURCES_STUB:%.S=$(OBJDIR)/%.o)
-
-SRCDIRS_FLASH_MASTA := src/flash_masta
-CSOURCES_FLASH_MASTA := $(foreach dir,$(SRCDIRS_FLASH_MASTA),$(notdir $(wildcard $(dir)/*.c)))
-ASMSOURCES_FLASH_MASTA := $(foreach dir,$(SRCDIRS_FLASH_MASTA),$(notdir $(wildcard $(dir)/*.S)))
-OBJECTS_FLASH_MASTA := $(CSOURCES_FLASH_MASTA:%.c=$(OBJDIR)/%.o) $(ASMSOURCES_FLASH_MASTA:%.S=$(OBJDIR)/%.o)
-
-SRCDIRS_ALL := $(SRCDIRS) $(SRCDIRS_STUB) $(SRCDIRS_FLASH_MASTA)
-CFLAGS += -Ires -Isrc
+CFLAGS += -Ires -Isrc -DTARGET_$(TARGET)
 
 DEPS := $(OBJECTS:.o=.d)
 CFLAGS += -MMD -MP
 
-vpath %.c $(SRCDIRS_ALL)
-vpath %.S $(SRCDIRS_ALL)
+vpath %.c $(SRCDIRS)
+vpath %.S $(SRCDIRS)
 
 .PHONY: all clean install
 
-all: CartFriend_FlashMasta.wsc CartFriend_FlashMasta_SafeMode.wsc CartFriend_FlashMasta.sram.bin CartFriend_Stub.ws
+all: CartFriend_$(TARGET).wsc
 
-CartFriend_FlashMasta.wsc: $(OBJECTS) $(OBJECTS_FLASH_MASTA)
+CartFriend_$(TARGET).wsc: $(OBJECTS) | $(OJBDIR)
 	$(SWANLINK) -v -o $@ --publisher-id 170 --game-id 55 --output-elf $@.elf $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
-
-CartFriend_FlashMasta_SafeMode.wsc: $(OBJECTS) $(OBJECTS_FLASH_MASTA)
-	$(SWANLINK) -v -o $@ --publisher-id 170 --game-id 55 --output-elf $@.elf $(SLFLAGS) --disable-custom-bootsplash --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
-
-CartFriend_FlashMasta.sram.bin: $(OBJECTS) $(OBJECTS_FLASH_MASTA)
-	$(SWANLINK) -v -o $@ --output-elf $@.elf -t sram_binary $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
-
-CartFriend_Stub.ws: $(OBJECTS) $(OBJECTS_STUB)
-	$(SWANLINK) -v -o $@ --output-elf $@.elf $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_STUB) $(LIBS)
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -60,8 +43,6 @@ $(OBJDIR):
 
 clean:
 	rm -r $(OBJDIR)/*
-	rm CartFriend_FlashMasta.wsc CartFriend_FlashMasta.wsc.elf
-	rm CartFriend_FlashMasta_SafeMode.wsc CartFriend_FlashMasta_SafeMode.wsc.elf
-	rm CartFriend_Stub.ws CartFriend_Stub.ws.elf
+	rm CartFriend_$(TARGET).wsc CartFriend_$(TARGET).elf
 
 -include $(DEPS)

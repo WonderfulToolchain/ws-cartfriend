@@ -59,7 +59,3 @@ bool driver_erase_bank(uint16_t unused, uint16_t slot, uint16_t bank) {
 void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank) {
     
 }
-
-bool driver_supports_slots(void) {
-    return false;
-}

@@ -29,6 +29,8 @@
 #include "util.h"
 #include "ws/hardware.h"
 
+#ifdef USE_SLOT_SYSTEM
+
 #define BROWSE_SUB_LAUNCH 0
 #define BROWSE_SUB_INFO 1
 #define BROWSE_SUB_RENAME 2
@@ -342,3 +344,5 @@ void ui_browse(void) {
         }
     }
 }
+
+#endif

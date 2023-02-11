@@ -4,7 +4,14 @@ WonderSwan flashcart launcher/utility. Work in progress.
 
 ## Supported flashcarts
 
-  * WS Flash Masta (currently in first slot only).
+  * WS Flash Masta (currently in first slot only) - target `flash_masta`
+  * Generic (no flashcart-specific features) - target `generic`
+
+## Build instructions
+
+Once the Wonderful toolchain is installed (when it's officially released - it's a bit of a mess right now), run:
+
+    $ make TARGET=target
 
 ## Licensing
 

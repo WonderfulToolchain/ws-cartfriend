@@ -243,20 +243,20 @@ void ui_settings(void) {
     uint8_t menu_list[32];
     uint8_t i = 0;
     menu_list[i++] = MENU_OPT_THEME;
-    if (driver_supports_slots()) {
-        menu_list[i++] = MENU_OPT_HIDE_SLOT_IDS;
+#ifdef USE_SLOT_SYSTEM
+    menu_list[i++] = MENU_OPT_HIDE_SLOT_IDS;
+#endif
+    menu_list[i++] = MENU_ENTRY_DIVIDER;
+#ifdef USE_SLOT_SYSTEM
+    menu_list[i++] = MENU_OPT_SLOTMAP;
+    menu_list[i++] = MENU_OPT_SAVEMAP;
+    menu_list[i++] = MENU_OPT_SAVE_MANAGEMENT;
+    menu_list[i++] = MENU_OPT_ADVANCED;
+    if (settings_local.active_sram_slot < SRAM_SLOTS) {
+        menu_list[i++] = MENU_OPT_UNLOAD_SRAM;
     }
     menu_list[i++] = MENU_ENTRY_DIVIDER;
-    if (driver_supports_slots()) {
-        menu_list[i++] = MENU_OPT_SLOTMAP;
-        menu_list[i++] = MENU_OPT_SAVEMAP;
-        menu_list[i++] = MENU_OPT_SAVE_MANAGEMENT;
-        menu_list[i++] = MENU_OPT_ADVANCED;
-        if (settings_local.active_sram_slot < SRAM_SLOTS) {
-            menu_list[i++] = MENU_OPT_UNLOAD_SRAM;
-        }
-        menu_list[i++] = MENU_ENTRY_DIVIDER;
-    }
+#endif
     menu_list[i++] = MENU_OPT_SAVE;
     if (settings_changed) {
         menu_list[i++] = MENU_OPT_REVERTSETTINGS;
@@ -273,6 +273,7 @@ void ui_settings(void) {
 Reselect:
     ;
     uint16_t result = ui_menu_select(&menu);
+#ifdef USE_SLOT_SYSTEM
     if (result == MENU_OPT_SAVEMAP) {
         i = 0;
         for (uint8_t j = 0; j < SRAM_SLOTS; j++) {
@@ -321,22 +322,6 @@ Reselect:
                 settings_mark_changed();
             }
         }
-    } else if (result == MENU_OPT_THEME) {
-        if (ws_system_color_active()) {
-            settings_local.color_theme = (settings_local.color_theme & 0x80)
-                | (((settings_local.color_theme & 0x7F) + 1) % UI_THEME_COUNT);
-        } else {
-            settings_local.color_theme ^= 0x80;
-        }
-        settings_mark_changed();
-        ui_update_theme(settings_local.color_theme);
-        goto Reselect;
-    } else if (result == MENU_OPT_SAVE) {
-        settings_save();
-        goto Reselect;
-    } else if (result == MENU_OPT_ADVANCED) {
-        ui_reset_main_screen();
-        ui_settings_advanced(menu_list);
     } else if (result == MENU_OPT_HIDE_SLOT_IDS) {
         settings_local.flags1 ^= SETT_FLAGS1_HIDE_SLOT_IDS;
         settings_mark_changed();
@@ -344,11 +329,6 @@ Reselect:
     } else if (result == MENU_OPT_UNLOAD_SRAM) {
         if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
             sram_switch_to_slot(0xFF);
-        }
-    } else if (result == MENU_OPT_REVERTSETTINGS) {
-        if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
-            settings_load();
-            settings_refresh();
         }
     } else if (result == MENU_OPT_SAVE_MANAGEMENT) {
         i = 0;
@@ -393,6 +373,29 @@ SaveMgmtReselect:
             }
         } else {
             goto SaveMgmtReselect;
+        }
+    }
+#endif
+    if (result == MENU_OPT_THEME) {
+        if (ws_system_color_active()) {
+            settings_local.color_theme = (settings_local.color_theme & 0x80)
+                | (((settings_local.color_theme & 0x7F) + 1) % UI_THEME_COUNT);
+        } else {
+            settings_local.color_theme ^= 0x80;
+        }
+        settings_mark_changed();
+        ui_update_theme(settings_local.color_theme);
+        goto Reselect;
+    } else if (result == MENU_OPT_SAVE) {
+        settings_save();
+        goto Reselect;
+    } else if (result == MENU_OPT_ADVANCED) {
+        ui_reset_main_screen();
+        ui_settings_advanced(menu_list);
+    } else if (result == MENU_OPT_REVERTSETTINGS) {
+        if (ui_dialog_run(0, 1, LK_DIALOG_CONFIRM, LK_DIALOG_YES_NO) == 0) {
+            settings_load();
+            settings_refresh();
         }
     }
 }

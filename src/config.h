@@ -16,8 +16,18 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
+#ifdef TARGET_flash_masta
+#define USE_SLOT_SYSTEM
 #define FLASH_CONFIG_SIZE 1024
 #define GAME_SLOTS 16
 #define SRAM_SLOTS 15
+#endif
+
+#ifdef TARGET_generic
+// TODO: No longer rely on these values.
+#define FLASH_CONFIG_SIZE 1024
+#define GAME_SLOTS 16
+#define SRAM_SLOTS 15
+#endif
 
 // #define USE_LOW_BATTERY_WARNING

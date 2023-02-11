@@ -105,11 +105,10 @@ void settings_load(void) {
     settings_changed = false;
     bool settings_found = false;
 
-    if (!driver_supports_slots()) {
-        settings_reset();
-        return;
-    }
-
+#ifndef USE_SLOT_SYSTEM
+    settings_reset();
+    return;
+#else
     if (driver_get_launch_slot() != 0xFF) {
         settings_slot = MAX_SETTINGS_SLOT;
         while (settings_slot <= MAX_SETTINGS_SLOT) {
@@ -141,6 +140,7 @@ void settings_load(void) {
     if (settings_local.avr_cart_delay < MINIMUM_AVR_CART_DELAY) {
         settings_local.avr_cart_delay = DEFAULT_AVR_CART_DELAY;
     }
+#endif
 }
 
 void settings_refresh(void) {
@@ -153,6 +153,7 @@ void settings_mark_changed(void) {
 }
 
 void settings_save(void) {
+#ifdef USE_SLOT_SYSTEM
     if (!settings_changed) return;
     if (driver_get_launch_slot() == 0xFF) return;
 
@@ -181,4 +182,5 @@ void settings_save(void) {
     ui_clear_work_indicator();
     settings_changed = false;
     ui_update_indicators();
+#endif
 }

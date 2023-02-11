@@ -70,11 +70,15 @@ void ui_set_current_tab(uint8_t tab);
 bool ui_poll_events(void);
 void ui_update_indicators(void);
 
-#define UI_TAB_BROWSE 0
-#define UI_TAB_TOOLS 1
-#define UI_TAB_SETTINGS 2
-#define UI_TAB_ABOUT 3
-#define UI_TAB_TOTAL 4
+typedef enum {
+#ifdef USE_SLOT_SYSTEM
+    UI_TAB_BROWSE,
+#endif
+    UI_TAB_TOOLS,
+    UI_TAB_SETTINGS,
+    UI_TAB_ABOUT,
+    UI_TAB_TOTAL
+} ui_tab_id_t;
 
 // Work indicator
 

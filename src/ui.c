@@ -254,7 +254,9 @@ void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const
 // Tabs
 
 static uint16_t __far ui_tabs_to_lks[] = {
+#ifdef USE_SLOT_SYSTEM
     LK_UI_HEADER_BROWSE,
+#endif
     LK_UI_HEADER_TOOLS,
     LK_UI_HEADER_SETTINGS,
     LK_UI_HEADER_ABOUT,
@@ -262,21 +264,14 @@ static uint16_t __far ui_tabs_to_lks[] = {
 };
 uint8_t ui_current_tab;
 
-static bool ui_hack_show_browse_tab(void) {
-    return driver_supports_slots();
-}
-
 void ui_set_current_tab(uint8_t tab) {
-    ui_current_tab = tab;
-    if (tab == 0 && !ui_hack_show_browse_tab()) {
-        ui_current_tab = 1;
-        tab = 1;
-    }
-
     uint8_t x = 0;
     bool active = true;
     const char __far* text = lang_keys[ui_tabs_to_lks[tab]];
     bool finished = false;
+
+    ui_current_tab = tab;
+    
 
     while (x < 28) {
         if (text != NULL && ((*text) != 0)) {
@@ -307,7 +302,7 @@ void ui_set_current_tab(uint8_t tab) {
         ui_putc(true, 27, 0, UI_GLYPH_ARROW_RIGHT, 2);
     }
 
-    if (ui_current_tab > 1 || (ui_current_tab == 1 && ui_hack_show_browse_tab())) {
+    if (ui_current_tab >= 1) {
         ui_putc(true, 25, 0, 0, 2);
         ui_putc(true, 26, 0, UI_GLYPH_ARROW_LEFT, 2);
         if (finished) {
@@ -320,9 +315,9 @@ void ui_set_current_tab(uint8_t tab) {
 
 void ui_update_indicators(void) {
     ui_putc(true, 0, 17, settings_local.active_sram_slot < SRAM_SLOTS ? UI_GLYPH_SRAM_ACTIVE : 0, 2);
-    if (driver_supports_slots()) {
-        ui_putc(true, 2, 17, settings_changed ? UI_GLYPH_SETTINGS_CHANGED : 0, 2);
-    }
+#ifdef USE_SLOT_SYSTEM
+    ui_putc(true, 2, 17, settings_changed ? UI_GLYPH_SETTINGS_CHANGED : 0, 2);
+#endif
 }
 
 bool ui_poll_events(void) {

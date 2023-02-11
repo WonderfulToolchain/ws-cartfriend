@@ -70,19 +70,19 @@ void main(void) {
 
 	input_wait_clear(); // wait for input to calm down
 
-	ui_set_current_tab(UI_TAB_BROWSE);
+	ui_set_current_tab(0);
 	wait_for_vblank();
 	ui_show();
     outportb(IO_LCD_SEG, LCD_SEG_ORIENT_H);
 
+#ifdef USE_SLOT_SYSTEM
 	if (settings_local.active_sram_slot == SRAM_SLOT_FIRST_BOOT) {
-	    if (driver_supports_slots()) {
-			ui_reset_main_screen();
-			if (ui_dialog_run(0, 0, LK_DIALOG_FIRST_BOOT_ERASE, LK_DIALOG_YES_NO) == 0) {
-				sram_erase(SRAM_SLOT_ALL);
-			}
+		ui_reset_main_screen();
+		if (ui_dialog_run(0, 0, LK_DIALOG_FIRST_BOOT_ERASE, LK_DIALOG_YES_NO) == 0) {
+			sram_erase(SRAM_SLOT_ALL);
 		}
 	}
+#endif
 
 #ifdef USE_LOW_BATTERY_WARNING
 	// The NMI handler for low battery use must be in RAM - it can be called during
@@ -95,9 +95,11 @@ void main(void) {
 		ui_reset_main_screen();
 
 		switch (ui_current_tab) {
+#ifdef USE_SLOT_SYSTEM
 		case UI_TAB_BROWSE:
 			ui_browse();
 			break;
+#endif
 		case UI_TAB_ABOUT:
 			ui_about();
 			break;
