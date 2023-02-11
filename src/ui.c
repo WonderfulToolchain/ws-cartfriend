@@ -136,6 +136,7 @@ uint8_t ui_set_language(uint8_t id) {
     switch (id) {
     case UI_LANGUAGE_EN: lang_keys = lang_keys_en; break;
     case UI_LANGUAGE_PL: lang_keys = lang_keys_pl; break;
+    case UI_LANGUAGE_DE: lang_keys = lang_keys_de; break;
     }
     return id;
 }

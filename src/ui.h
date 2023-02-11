@@ -22,7 +22,8 @@
 
 #define UI_LANGUAGE_EN 0
 #define UI_LANGUAGE_PL 1
-#define UI_LANGUAGE_MAX 2
+#define UI_LANGUAGE_DE 2
+#define UI_LANGUAGE_MAX 3
 
 #define UI_PAL_MAIN    0
 #define UI_PAL_MAINI   1
