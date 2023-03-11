@@ -133,7 +133,7 @@ void ui_reset_alt_screen(void) {
 }
 
 uint8_t ui_set_language(uint8_t id) {
-    id %= UI_LANGUAGE_MAX;
+    if (id >= UI_LANGUAGE_MAX) id = UI_LANGUAGE_EN;
     switch (id) {
     case UI_LANGUAGE_EN: lang_keys = lang_keys_en; break;
     case UI_LANGUAGE_PL: lang_keys = lang_keys_pl; break;

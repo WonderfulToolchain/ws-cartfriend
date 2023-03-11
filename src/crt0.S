@@ -30,7 +30,7 @@ _ivt:
 	.fill 16, 4, 0
 	.fill 12, 2, 0
 
-	.section .text
+	.section .start
 	.global _start
 _start:
 	cli
@@ -91,7 +91,7 @@ _start:
 	mov	ds, ax
 
 	// clear int enable
-	out 0xB2, al
+	out	0xB2, al
 
 	// clear bss
 	mov	di, offset "__edata"
@@ -102,13 +102,9 @@ _start:
 	mov	al, 0x08
 	out	0xB0, al
 
-	// call main
 	//.reloc	.+3, R_386_SEG16, main
-	//call 0:main
-	.byte	0x9A
+	//jmp 0:main
+	.byte	0xEA
 	.word	main
 	.reloc	., R_386_SEG16, "main!"
 	.word	0
-
-loop:
-	jmp loop
