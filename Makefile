@@ -30,7 +30,7 @@ vpath %.S $(SRCDIRS)
 all: CartFriend_$(TARGET).wsc
 
 CartFriend_$(TARGET).wsc: $(OBJECTS) | $(OJBDIR)
-	$(SWANLINK) -v -o $@ --publisher-id 170 --game-id 55 --output-elf $@.elf $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(OBJECTS_FLASH_MASTA) $(LIBS)
+	$(SWANLINK) -v -o $@ --publisher-id 170 --game-id 55 --output-elf $@.elf $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(LIBS)
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
