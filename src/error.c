@@ -1,9 +1,9 @@
 #include <stdint.h>
+#include <wonderful.h>
 #include <ws.h>
 #include "error.h"
 #include "lang.h"
 #include "ui.h"
-#include "wonderful-asm-common.h"
 
 void error_critical(uint16_t code, uint16_t extra) {
     ui_reset_main_screen();

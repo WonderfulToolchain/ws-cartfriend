@@ -16,6 +16,7 @@
  */
 
 #include <stdbool.h>
+#include <string.h>
 #include <ws.h>
 #include "driver.h"
 #include "input.h"

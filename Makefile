@@ -1,21 +1,20 @@
 ifndef WONDERFUL_TOOLCHAIN
 $(error Please define WONDERFUL_TOOLCHAIN to point to the location of the Wonderful toolchain.)
 endif
-include $(WONDERFUL_TOOLCHAIN)/i8086/wswan.mk
+include $(WONDERFUL_TOOLCHAIN)/target/wswan/medium/makedefs.mk
 
 TARGET ?= generic
 
 OBJDIR := obj/$(TARGET)
 MKDIRS := $(OBJDIR)
-LIBS := -lws -lc -lgcc
-CFLAGS += -Os -fno-jump-tables -ffunction-sections
-SLFLAGS := --heap-length 0x1800 --rtc --color --rom-size 2 --ram-type SRAM_512KB --unlock-ieep
-LDFLAGS += -Wl,--gc-sections
+LIBS := -lws
+CFLAGS := $(WF_ARCH_CFLAGS) -I$(WF_TARGET_DIR)/include -Os -fno-jump-tables -ffunction-sections
+LDFLAGS := $(WF_ARCH_LDFLAGS) -L$(WF_TARGET_DIR)/lib -Wl,--gc-sections
 
 SRCDIRS := res src src/$(TARGET)
 CSOURCES := $(foreach dir,$(SRCDIRS),$(notdir $(wildcard $(dir)/*.c)))
-ASMSOURCES := $(foreach dir,$(SRCDIRS),$(notdir $(wildcard $(dir)/*.S)))
-OBJECTS := $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.S=$(OBJDIR)/%.o)
+ASMSOURCES := $(foreach dir,$(SRCDIRS),$(notdir $(wildcard $(dir)/*.s)))
+OBJECTS := $(CSOURCES:%.c=$(OBJDIR)/%.o) $(ASMSOURCES:%.s=$(OBJDIR)/%.o)
 
 CFLAGS += -Ires -Isrc -DTARGET_$(TARGET)
 
@@ -23,20 +22,20 @@ DEPS := $(OBJECTS:.o=.d)
 CFLAGS += -MMD -MP
 
 vpath %.c $(SRCDIRS)
-vpath %.S $(SRCDIRS)
+vpath %.s $(SRCDIRS)
 
 .PHONY: all clean install
 
 all: CartFriend_$(TARGET).wsc
 
-CartFriend_$(TARGET).wsc: $(OBJECTS) | $(OJBDIR)
-	$(SWANLINK) -v -o $@ --publisher-id 170 --game-id 55 --output-elf $@.elf $(SLFLAGS) --linker-args $(LDFLAGS) $(OBJECTS) $(LIBS)
+CartFriend_$(TARGET).wsc: $(OBJECTS) | $(OBJDIR)
+	$(ROMLINK) -v -o $@ --output-elf $@.elf -- $(OBJECTS) $(LDFLAGS) $(LIBS)
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBJDIR)/%.o: %.S | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+$(OBJDIR)/%.o: %.s | $(OBJDIR)
+	$(CC) -x assembler-with-cpp $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR):
 	$(info $(shell mkdir -p $(MKDIRS)))

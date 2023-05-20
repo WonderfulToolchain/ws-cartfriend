@@ -16,7 +16,7 @@
  */
 
 #include <string.h>
-#include <wonderful-asm.h>
+#include <wonderful.h>
 #include <ws.h>
 #include "driver.h"
 #include "lang.h"
@@ -24,8 +24,6 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
-#include "wonderful-asm-common.h"
-#include "ws/hardware.h"
 #include "xmodem.h"
 #include "../res/wsmonitor.h"
 

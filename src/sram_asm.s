@@ -15,7 +15,7 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-#include "wonderful-asm.h"
+#include <wonderful.h>
 #include "config.h"
 
 	.arch	i186

@@ -24,7 +24,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <wonderful-asm.h>
+#include <wonderful.h>
 #include "../driver.h"
 
 extern uint8_t fm_initial_slot;

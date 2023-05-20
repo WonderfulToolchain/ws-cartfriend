@@ -22,7 +22,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include <wonderful-asm.h>
+#include <wonderful.h>
 #include "config.h"
 
 #ifdef USE_LOW_BATTERY_WARNING

@@ -18,7 +18,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <wonderful-asm.h>
+#include <wonderful.h>
 #include <ws.h>
 #include "config.h"
 #include "driver.h"
