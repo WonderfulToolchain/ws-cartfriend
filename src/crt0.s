@@ -81,7 +81,7 @@ _start:
 	mov	ds, ax
 	mov	si, offset "__erom&"
 	mov	di, offset "__sdata"
-	mov	cx, offset "__ldata_words"
+	mov	cx, offset "__lwdata"
 	cld
 	rep	movsw
 
@@ -95,7 +95,7 @@ _start:
 
 	// clear bss
 	mov	di, offset "__edata"
-	mov	cx, offset "__lbss_words"
+	mov	cx, offset "__lwbss"
 	rep	stosw
 
 	// configure default interrupt base
