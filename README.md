@@ -2,16 +2,21 @@
 
 WonderSwan flashcart launcher/utility. Work in progress.
 
-## Supported flashcarts
+## Supported cartridges
 
   * WS Flash Masta (currently in first slot only) - target `flash_masta`
   * Generic (no flashcart-specific features) - target `generic`
 
 ## Build instructions
 
-Once the Wonderful toolchain is installed (when it's officially released - it's a bit of a mess right now), run:
+Requirements:
 
-    $ make TARGET=target
+* [The Wonderful toolchain](https://wonderful.asie.pl/doc/general/getting-started/),
+* Recent version of Python 3 and the Pillow library.
+
+1. Install the WSwan target tools: `wf-pacman -S target-wswan`.
+2. Build the assets: `./build_assets.sh`.
+3. Build the ROM: `make TARGET=target` - see "Supported cartridges" for valid target names.
 
 ## Licensing
 
