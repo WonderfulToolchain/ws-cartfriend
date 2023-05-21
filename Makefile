@@ -7,7 +7,7 @@ TARGET ?= generic
 
 OBJDIR := obj/$(TARGET)
 MKDIRS := $(OBJDIR)
-LIBS := -lws
+LIBS := -lwsx -lws
 CFLAGS := $(WF_ARCH_CFLAGS) -I$(WF_TARGET_DIR)/include -Os -fno-jump-tables -ffunction-sections
 LDFLAGS := $(WF_ARCH_LDFLAGS) -L$(WF_TARGET_DIR)/lib -Wl,--gc-sections
 

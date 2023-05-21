@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ws.h>
+#include <wsx/planar_unpack.h>
 #include "config.h"
 #include "driver.h"
 #include "input.h"
@@ -163,11 +164,7 @@ void ui_init(void) {
     ui_update_theme(0);
 
     // install font @ 0x2000
-    const uint8_t __far *font_src = _font_default_bin;
-    uint16_t *font_dst = (uint16_t*) 0x2000;
-    for (uint16_t i = 0; i < _font_default_bin_size; i++, font_src++, font_dst++) {
-        *font_dst = *font_src;
-    }
+    wsx_planar_unpack((uint16_t*) 0x2000, _font_default_bin_size, _font_default_bin, WSX_PLANAR_UNPACK_MODE_1BPP_2BPP_ZERO(0));
 
     ui_reset_main_screen();
     ui_reset_alt_screen();
