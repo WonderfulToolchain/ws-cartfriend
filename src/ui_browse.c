@@ -16,13 +16,13 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <ws.h>
 #include "config.h"
 #include "driver.h"
 #include "input.h"
 #include "lang.h"
-#include "nanoprintf.h"
 #include "settings.h"
 #include "sram.h"
 #include "ui.h"
@@ -51,7 +51,7 @@ static void ui_browse_menu_build_line(uint8_t entry_id, void *userdata, char *bu
         } else if (settings_local.flags1 & SETT_FLAGS1_HIDE_SLOT_IDS) {
             buf_name[0] = 0;
         } else {
-            npf_snprintf(buf_name, sizeof(buf_name), lang_keys[LK_UI_BROWSE_SLOT_DEFAULT_NAME],
+            snprintf(buf_name, sizeof(buf_name), lang_keys[LK_UI_BROWSE_SLOT_DEFAULT_NAME],
                 (uint16_t) cart_metadata[(entry_id*5) + 4],
                 (uint16_t) cart_metadata[(entry_id*5)],     (uint16_t) cart_metadata[(entry_id*5) + 1],
                 (uint16_t) cart_metadata[(entry_id*5) + 2], (uint16_t) cart_metadata[(entry_id*5) + 3]
@@ -59,7 +59,7 @@ static void ui_browse_menu_build_line(uint8_t entry_id, void *userdata, char *bu
         }
         uint8_t sub_slot = entry_id >> 4;
         entry_id &= 0xF;
-        npf_snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_SLOT], (uint16_t) (entry_id + 1), sub_slot == 0 ? ' ' : ('A' + sub_slot - 1), ((const char __far*) buf_name));
+        snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_SLOT], (uint16_t) (entry_id + 1), sub_slot == 0 ? ' ' : ('A' + sub_slot - 1), ((const char __far*) buf_name));
     }
 }
 
@@ -74,7 +74,7 @@ static void ui_browse_submenu_build_line(uint8_t entry_id, void *userdata, char 
 }
 
 static void ui_browse_save_select_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
-    npf_snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_USE_SRAM], entry_id + 'A');
+    snprintf(buf, buf_len, lang_keys[LK_UI_BROWSE_USE_SRAM], entry_id + 'A');
 }
 
 static bool ui_read_rom_header(void *buffer, uint8_t slot, uint8_t bank) {
@@ -164,7 +164,7 @@ void ui_browse_info(uint8_t slot) {
     driver_lock();
     input_wait_clear();
 
-    npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ID_VAL],
+    snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ID_VAL],
         (uint16_t) rom_header[6],
         (uint16_t) rom_header[8],
         (uint16_t) rom_header[9]);
@@ -173,7 +173,7 @@ void ui_browse_info(uint8_t slot) {
     if (rom_header[10] >= sizeof(rom_size_table)) {
         strncpy(buf, lang_keys[LK_UI_BROWSE_INFO_UNKNOWN], sizeof(buf));
     } else {
-        npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ROM_SIZE_MBIT],
+        snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_ROM_SIZE_MBIT],
             (uint16_t) rom_size_table[rom_header[10]]);
     }
 
@@ -197,7 +197,7 @@ void ui_browse_info(uint8_t slot) {
             if (kbit == 0) {
                 strncpy(buf, lang_keys[LK_UI_BROWSE_INFO_UNKNOWN], sizeof(buf));
             } else {
-                npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_DECIMAL], kbit);
+                snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_DECIMAL], kbit);
             }
             ui_printf(false, save_str_x, save_str_y++, 0, lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE_SRAM], (const char __far*) buf);
         }
@@ -211,7 +211,7 @@ void ui_browse_info(uint8_t slot) {
             if (kbit == 0) {
                 strncpy(buf, lang_keys[LK_UI_BROWSE_INFO_UNKNOWN], sizeof(buf));
             } else {
-                npf_snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_DECIMAL], kbit);
+                snprintf(buf, sizeof(buf), lang_keys[LK_UI_BROWSE_INFO_DECIMAL], kbit);
             }
             ui_printf(false, save_str_x, save_str_y++, 0, lang_keys[LK_UI_BROWSE_INFO_SAVE_TYPE_EEPROM], (const char __far*) buf);
         }

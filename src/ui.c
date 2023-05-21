@@ -16,6 +16,7 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 #include <ws.h>
 #include "config.h"
@@ -25,7 +26,6 @@
 #include "settings.h"
 #include "ui.h"
 #include "../res/font_default.h"
-#include "nanoprintf.h"
 #include "util.h"
 #include "ws/display.h"
 #include "ws/hardware.h"
@@ -239,7 +239,7 @@ void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char 
     char buf[33];
     va_list val;
     va_start(val, format);
-    npf_vsnprintf(buf, sizeof(buf), format, val);
+    vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
     ui_puts(alt_screen, x, y, color, buf);
 }
@@ -248,7 +248,7 @@ void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __
     char buf[33];
     va_list val;
     va_start(val, format);
-    npf_vsnprintf(buf, sizeof(buf), format, val);
+    vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
     uint8_t x = ((alt_screen ? 28 : MAIN_SCREEN_WIDTH) - strlen(buf)) >> 1;
     ui_puts(alt_screen, x, y, color, buf);
@@ -258,7 +258,7 @@ void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const
     char buf[33];
     va_list val;
     va_start(val, format);
-    int len = npf_vsnprintf(buf, sizeof(buf), format, val);
+    int len = vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
     ui_puts(alt_screen, x + 1 - len, y, color, buf);
 }

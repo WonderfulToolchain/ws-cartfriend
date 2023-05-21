@@ -15,12 +15,12 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <ws.h>
 #include "config.h"
 #include "driver.h"
 #include "lang.h"
-#include "nanoprintf.h"
 #include "settings.h"
 #include "sram.h"
 #include "ui.h"
@@ -69,7 +69,7 @@ static uint16_t __far ui_theme_color_lks[] = {
 
 static void ui_opt_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id == MENU_OPT_SAVE) {
-        npf_snprintf(buf, buf_len, lang_keys[settings_changed ? LK_MENU_MARKED : LK_MENU_UNMARKED], lang_keys[ui_opt_lks[entry_id]]);
+        snprintf(buf, buf_len, lang_keys[settings_changed ? LK_MENU_MARKED : LK_MENU_UNMARKED], lang_keys[ui_opt_lks[entry_id]]);
     } else {
         strncpy(buf, lang_keys[ui_opt_lks[entry_id]], buf_len);
         if (entry_id == MENU_OPT_HIDE_SLOT_IDS) {
@@ -129,10 +129,10 @@ static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
 
 static void ui_opt_menu_savemap_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < SRAM_SLOTS) {
-        npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_SAVEMAP_SRAM_ACTIVE : LK_UI_SAVEMAP_SRAM], entry_id + 'A');
+        snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_SAVEMAP_SRAM_ACTIVE : LK_UI_SAVEMAP_SRAM], entry_id + 'A');
         uint8_t sram_target = settings_local.sram_slot_mapping[entry_id];
         if (sram_target < GAME_SLOTS) {
-            npf_snprintf(buf_right, buf_right_len, lang_keys[LK_UI_SAVEMAP_SLOT], sram_target + 1);
+            snprintf(buf_right, buf_right_len, lang_keys[LK_UI_SAVEMAP_SLOT], sram_target + 1);
         } else if (sram_target == 0xFF) {
             strncpy(buf_right, lang_keys[LK_UI_SAVEMAP_UNUSED], buf_right_len);
         }
@@ -160,7 +160,7 @@ static uint8_t ui_savemap_prev(uint8_t slot) {
 
 static void ui_opt_menu_slotmap_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < GAME_SLOTS) {
-        npf_snprintf(buf, buf_len, lang_keys[LK_UI_SLOTMAP_SLOT], entry_id + 1);
+        snprintf(buf, buf_len, lang_keys[LK_UI_SLOTMAP_SLOT], entry_id + 1);
         uint8_t slot_type = settings_local.slot_type[entry_id];
         if (slot_type == SLOT_TYPE_SOFT) {
             strncpy(buf_right, lang_keys[LK_UI_SLOTMAP_SOFT], buf_right_len);
@@ -191,7 +191,7 @@ static uint8_t ui_slotmap_next(uint8_t slot, uint8_t delta) {
 
 static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     if (entry_id < SRAM_SLOTS) {
-        npf_snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_ERASE_BLOCK_ACTIVE : LK_UI_ERASE_BLOCK], entry_id + 'A');
+        snprintf(buf, buf_len, lang_keys[entry_id == settings_local.active_sram_slot ? LK_UI_ERASE_BLOCK_ACTIVE : LK_UI_ERASE_BLOCK], entry_id + 'A');
     } else if (entry_id == 0xEF) {
         strncpy(buf, lang_keys[LK_UI_ERASE_ALL_SAVE_DATA], buf_len);
     } else if (entry_id == 0xEE) {
