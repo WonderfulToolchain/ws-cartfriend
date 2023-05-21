@@ -75,13 +75,21 @@ _start:
 
 	// copy rodata/data from ROM to RAM
 	//mov	ax, offset "__erom!"
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
+	// set DS to the location of rodata
 	.byte	0xB8
 	.reloc	., R_386_SEG16, "__erom!"
 	.word	0
 	mov	ds, ax
+#endif
 	mov	si, offset "__erom&"
 	mov	di, offset "__sdata"
 	mov	cx, offset "__lwdata"
+#ifndef __IA16_CMODEL_IS_FAR_TEXT
+	// set DS to the location of rodata
+	push cs
+	pop ds
+#endif
 	cld
 	rep	movsw
 
@@ -102,9 +110,13 @@ _start:
 	mov	al, 0x08
 	out	0xB0, al
 
+#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	//.reloc	.+3, R_386_SEG16, main
 	//jmp 0:main
 	.byte	0xEA
 	.word	main
 	.reloc	., R_386_SEG16, "main!"
 	.word	0
+#else
+	jmp main
+#endif

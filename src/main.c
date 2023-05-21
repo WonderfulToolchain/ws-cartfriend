@@ -38,12 +38,11 @@
 volatile uint16_t vbl_ticks;
 
 __attribute__((interrupt))
-void vblank_int_handler(void) {
+void __far vblank_int_handler(void) {
 	vbl_ticks++;
 	vblank_input_update();
 	ws_hwint_ack(HWINT_VBLANK);
 }
-extern __attribute__((interrupt)) void lowbat_nmi_handler(void);
 
 void main(void) {
 	outportb(IO_INT_NMI_CTRL, 0);
