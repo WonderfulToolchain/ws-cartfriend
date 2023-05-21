@@ -1,0 +1,20 @@
+[cartridge]
+publisher_id = 170
+game_id = 55
+game_version = 0
+
+save_type = "SRAM_512KB"
+color = true
+rtc = true
+vertical = false
+unlock_internal_eeprom = true
+
+start_segment = 0xE000
+start_offset = 0x0000
+
+[memory]
+model = "small"
+
+[memory.layout]
+irq_vectors = [ 0x0000, 0x003F ]
+c_heap = [ 0x0060, 0x17FF ]
