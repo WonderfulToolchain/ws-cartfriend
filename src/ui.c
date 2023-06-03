@@ -164,7 +164,7 @@ void ui_init(void) {
     ui_update_theme(0);
 
     // install font @ 0x2000
-    wsx_planar_unpack((uint16_t*) 0x2000, _font_default_bin_size, _font_default_bin, WSX_PLANAR_UNPACK_MODE_1BPP_2BPP_ZERO(0));
+    wsx_planar_unpack((uint16_t*) 0x2000, _font_default_bin_size, _font_default_bin, WSX_PLANAR_UNPACK_1BPP_TO_2BPP_ZERO(1));
 
     ui_reset_main_screen();
     ui_reset_alt_screen();
