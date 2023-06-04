@@ -202,7 +202,7 @@ void ui_scroll(int8_t offset) {
 inline void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color) {
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
     uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
-    ws_screen_put(screen, prefix | chr, x++, y);
+    ws_screen_put_tile(screen, prefix | chr, x++, y);
 }
 
 void ui_fill_line(uint8_t y, uint8_t color) {
@@ -222,7 +222,7 @@ void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __
             buf++;
             continue;
         }
-        ws_screen_put(screen, prefix | ((uint8_t) *(buf++)), x++, y);
+        ws_screen_put_tile(screen, prefix | ((uint8_t) *(buf++)), x++, y);
         if (x == 28) return;
     }
 }
@@ -386,7 +386,7 @@ void ui_clear_work_indicator(void) {
 
 static void ui_menu_draw_line(ui_menu_state_t *menu, uint8_t pos, uint8_t color) {
     if (menu->list[pos] == MENU_ENTRY_DIVIDER) {
-        ws_screen_fill(SCREEN1, 196, 0, pos, 32, 1);
+        ws_screen_fill_tiles(SCREEN1, 196, 0, pos, 32, 1);
         return;
     }
 
@@ -516,7 +516,7 @@ static uint8_t ui_popup_menu_strlen(ui_popup_menu_state_t *menu, uint8_t i) {
 
 static void ui_popup_menu_draw_line(ui_popup_menu_state_t *menu, uint8_t pos, uint8_t color) {
     if (menu->list[pos] == MENU_ENTRY_DIVIDER) {
-        ws_screen_fill(SCREEN2, 196 | SCR_ENTRY_PALETTE(8), menu->x, menu->y + pos, menu->width, 1);
+        ws_screen_fill_tiles(SCREEN2, 196 | SCR_ENTRY_PALETTE(8), menu->x, menu->y + pos, menu->width, 1);
         return;
     }
 
@@ -524,7 +524,7 @@ static void ui_popup_menu_draw_line(ui_popup_menu_state_t *menu, uint8_t pos, ui
     buf[0] = 0;
 
     menu->build_line_func(menu->list[pos], menu->build_line_data, buf, 30);
-    ws_screen_fill(SCREEN2, SCR_ENTRY_PALETTE(color), menu->x, menu->y + pos, menu->width, 1);    
+    ws_screen_fill_tiles(SCREEN2, SCR_ENTRY_PALETTE(color), menu->x, menu->y + pos, menu->width, 1);    
     if (buf[0] != 0) {
         ui_puts(true, menu->x + 1, menu->y + pos, color, buf);
     }
@@ -695,7 +695,7 @@ uint8_t ui_dialog_run(uint16_t flags, uint8_t initial_option, uint16_t lk_questi
     uint8_t height = ((line_count + option_count + 3) + 1) & 0xFE;
     uint8_t x = 14 - ((width + 1) >> 1);
     uint8_t y = 9 - ((height + 1) >> 1);
-    ws_screen_fill(SCREEN2, SCR_ENTRY_PALETTE(UI_PAL_DIALOG), x, y, width, height);
+    ws_screen_fill_tiles(SCREEN2, SCR_ENTRY_PALETTE(UI_PAL_DIALOG), x, y, width, height);
     uint8_t selected_option = initial_option;
 
     // draw text

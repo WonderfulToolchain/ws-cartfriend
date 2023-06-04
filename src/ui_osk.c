@@ -136,7 +136,7 @@ bool ui_osk_run(uint16_t flags, char *buf, uint8_t buf_width) {
     osk.xt = (x + ((width - buf_width) >> 1));
     osk.xb = (x + ((width - (osk.width * 2 - 1)) >> 1));
     osk.y = 9 - ((height + 1) >> 1);
-    ws_screen_fill(SCREEN2, SCR_ENTRY_PALETTE(UI_PAL_DIALOG), x, osk.y, width, height);
+    ws_screen_fill_tiles(SCREEN2, SCR_ENTRY_PALETTE(UI_PAL_DIALOG), x, osk.y, width, height);
 
     // pre-draw some elements
     ui_putc(true, osk.xt - 1, osk.y + 1, '[', UI_PAL_DIALOG);
