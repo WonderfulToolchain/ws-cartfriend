@@ -7,6 +7,47 @@ WonderSwan flashcart launcher/utility. Work in progress.
   * WS Flash Masta (currently in first slot only) - target `flash_masta`
   * Generic (no flashcart-specific features) - target `generic`
 
+## Usage
+
+* Y4/Y2 - change visible tab
+* X1/X3 - navigate menu
+* X2/X4 - change option values
+* A - select
+* B - go back (inside options), menu (outside of options)
+
+### Browse
+
+The "Browse" tab allows:
+
+* Launching installed software (A),
+* Verifying basic software information (B -> Info),
+* Renaming software slots (B -> Rename).
+
+### Tools
+
+The "Tools" tab provides small tools useful for development:
+
+* [WSMonitor](https://bitbucket.org/trap15/wsmonitor) - use the EXT port as a serial port to access a rudimentary monitor.
+
+### Settings
+
+The "Settings" tab allows configuring CartFriend.
+
+* Hide slot IDs in menu - by default, CartFriend will label unnamed slots using their ID (publisher ID, game ID, game version, checksum). If this option is enabled, nothing will be shown for unnamed slots.
+* Slot type config - change the type of a slot.
+  * Launcher - the slot CartFriend was launched from; cannot be changed.
+  * Soft - one program (takes up entire slot).
+  * Multi(Linear)Soft - multiple <=1MB programs (in 1MB increments). Such a slot cannot make use of save data.
+  * Unused - the slot is not used.
+* Save block mapping - map available save blocks to Soft slots. This allows mapping mutliple blocks to one slot, allowing multiple
+  distinct saves for one piece of software.
+* Save data management - allows unloading save data from SRAM to Flash, as well as clearing save data for a given block.
+* Advanced - advanced settings:
+  * Buffered flash writes - enable faster flash writing.
+  * Serial I/O rate - toggle the EXT serial port speed between 9600 and 38400 bps.
+  * Force SRAM on next run - for the next software launched, ignore data in Flash - assume data in SRAM is this software's save data. 
+  * Unlock IEEP next boot - enable to unlock the internal EEPROM on the next boot. This is useful for installing BootFriend and/or custom splashes.
+
 ## Build instructions
 
 Requirements:
