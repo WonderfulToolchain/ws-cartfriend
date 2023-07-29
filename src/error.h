@@ -16,11 +16,12 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
- #include <stdint.h>
+#include <stdint.h>
+#include <wonderful.h>
 
 #define ERROR_CODE_SRAM_SLOT_OVERFLOW_UNKNOWN 0x0001
 #define ERROR_CODE_SRAM_SLOT_OVERFLOW_SWITCH 0x0002
 #define ERROR_CODE_UNLOCK_OVERFLOW 0x0003
 #define ERROR_CODE_LOCK_UNDERFLOW 0x0004
 
-void error_critical(uint16_t code, uint16_t extra);
+void error_critical(uint16_t code, uint16_t extra) __far;

@@ -1,7 +1,7 @@
 ifndef WONDERFUL_TOOLCHAIN
 $(error Please define WONDERFUL_TOOLCHAIN to point to the location of the Wonderful toolchain.)
 endif
-include $(WONDERFUL_TOOLCHAIN)/target/wswan/medium/makedefs.mk
+include $(WONDERFUL_TOOLCHAIN)/target/wswan/small/makedefs.mk
 
 TARGET ?= generic
 

@@ -118,19 +118,13 @@ driver_unlock_already_unlocked:
 driver_unlock_overflow:
 	mov ax, 3
 	mov dx, 0
-	//jmp far error_critical
-	.byte   0xEA
-	.word   error_critical
-	.reloc  ., R_386_SEG16, "error_critical!"
-	.word   0
+	.reloc  .+3, R_386_SEG16, "error_critical!"
+	jmp 0:error_critical
 driver_lock_underflow:
 	mov ax, 4
 	mov dx, 0
-	//jmp far error_critical
-	.byte   0xEA
-	.word   error_critical
-	.reloc  ., R_386_SEG16, "error_critical!"
-	.word   0
+	.reloc  .+3, R_386_SEG16, "error_critical!"
+	jmp 0:error_critical
 
 
 driver_init:

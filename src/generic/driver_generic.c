@@ -43,18 +43,18 @@ uint8_t driver_get_launch_slot(void) {
     return 0xFF;
 }
 
-bool driver_read_slot(void *ptr, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len) {
+bool driver_read_slot(void *ptr, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len) __far {
     return false;
 }
 
-bool driver_write_slot(const void *data, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len) {
+bool driver_write_slot(const void *data, uint16_t slot, uint16_t bank, uint16_t offset, uint16_t len) __far {
     return false;
 }
 
-bool driver_erase_bank(uint16_t unused, uint16_t slot, uint16_t bank) {
+bool driver_erase_bank(uint16_t unused, uint16_t slot, uint16_t bank) __far {
     return false;
 }
 
-void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank) {
+void driver_launch_slot(uint16_t unused, uint16_t slot, uint16_t bank) __far {
     
 }

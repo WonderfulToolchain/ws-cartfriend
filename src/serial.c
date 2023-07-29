@@ -8,7 +8,7 @@ uint8_t serial_txbuf[SERIAL_TXBUF_SIZE];
 uint8_t serial_txbuf_pos = 0, serial_txbuf_len = 0;
 
 __attribute__((interrupt))
-static void serial_txbuf_int_handler(void) {
+static void serial_txbuf_int_handler(void) __far {
     if (serial_txbuf_pos != serial_txbuf_len) {
         ws_serial_putc(serial_txbuf[serial_txbuf_pos]);
         serial_txbuf_pos = (serial_txbuf_pos + 1) & (SERIAL_TXBUF_SIZE - 1);

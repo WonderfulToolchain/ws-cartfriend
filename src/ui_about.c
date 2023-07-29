@@ -43,7 +43,7 @@ static inline int16_t cos(int16_t v) {
 void ui_about(void) {
     ui_puts_centered(false, 2, 0, lang_keys[LK_NAME]);
     // ui_puts_centered(false, 3, lang_keys[LK_RELEASE_DATE], 0);
-    /* ui_printf_centered(false, 3, 0, lang_keys[LK_UI_LOADED_FROM],
+    /* ui_bg_printf_centered(3, 0, lang_keys[LK_UI_LOADED_FROM],
         (int) fm_initial_slot[0],
         (int) fm_initial_slot[1],
         (int) fm_initial_slot[2],
@@ -133,7 +133,7 @@ void ui_about(void) {
             uint8_t z = (points3D[i][2] >> 2) + 128; // 128-16 .. 128+16
             points3D[i][0] = (points3D[i][0] * z) >> 7;
             points3D[i][1] = (points3D[i][1] * z) >> 7;
-            SPRITE_TABLE[(i << 2)] = (z < 118) ? 182 : ((z < 140) ? 7 : 181);
+            SPRITE_TABLE[(i << 2)] = (z < 118) ? 12 : ((z < 140) ? 7 : 11);
             SPRITE_TABLE[(i << 2) + 2] = (points3D[i][1] >> 2) + 65;
             SPRITE_TABLE[(i << 2) + 3] = (points3D[i][0] >> 2) + (112 + (sinOX >> 1));
         }

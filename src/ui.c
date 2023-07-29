@@ -173,7 +173,7 @@ void ui_init(void) {
 
     outportb(IO_SCR_BASE, SCR1_BASE((uint16_t) SCREEN1) | SCR2_BASE((uint16_t) SCREEN2));
     //ui_puts(true, 28 - strlen(lang_keys[LK_NAME]), 17, 2, lang_keys[LK_NAME]);
-    ui_putc(true, 26, 17, UI_GLYPH_PASSAGE, 2);
+    ui_fg_putc(26, 17, UI_GLYPH_PASSAGE, 2);
 }
 
 void ui_show(void) {
@@ -196,10 +196,14 @@ void ui_scroll(int8_t offset) {
     outportb(IO_SCR1_SCRL_Y, (scroll_y - 1) << 3);
 }
 
-inline void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color) {
+inline void ui_bg_putc(uint8_t x, uint8_t y, uint16_t chr, uint8_t color) {
     uint16_t prefix = SCR_ENTRY_PALETTE(color);
-    uint16_t *screen = alt_screen ? SCREEN2 : SCREEN1;
-    ws_screen_put_tile(screen, prefix | chr, x++, y);
+    ws_screen_put_tile(SCREEN1, prefix | chr, x++, y);
+}
+
+inline void ui_fg_putc(uint8_t x, uint8_t y, uint16_t chr, uint8_t color) {
+    uint16_t prefix = SCR_ENTRY_PALETTE(color);
+    ws_screen_put_tile(SCREEN2, prefix | chr, x++, y);
 }
 
 void ui_fill_line(uint8_t y, uint8_t color) {
@@ -229,32 +233,32 @@ void ui_puts_centered(bool alt_screen, uint8_t y, uint8_t color, const char __fa
     ui_puts(alt_screen, x, y, color, buf);
 }
 
-void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...) {
+void ui_bg_printf(uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...) {
     char buf[33];
     va_list val;
     va_start(val, format);
     vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
-    ui_puts(alt_screen, x, y, color, buf);
+    ui_puts(false, x, y, color, buf);
 }
 
-void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...) {
+void ui_bg_printf_centered(uint8_t y, uint8_t color, const char __far* format, ...) {
     char buf[33];
     va_list val;
     va_start(val, format);
     vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
-    uint8_t x = ((alt_screen ? 28 : MAIN_SCREEN_WIDTH) - strlen(buf)) >> 1;
-    ui_puts(alt_screen, x, y, color, buf);
+    uint8_t x = (MAIN_SCREEN_WIDTH - strlen(buf)) >> 1;
+    ui_puts(false, x, y, color, buf);
 }
 
-void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...) {
+void ui_bg_printf_right(uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...) {
     char buf[33];
     va_list val;
     va_start(val, format);
     int len = vsnprintf(buf, sizeof(buf), format, val);
     va_end(val);
-    ui_puts(alt_screen, x + 1 - len, y, color, buf);
+    ui_puts(false, x + 1 - len, y, color, buf);
 }
 
 // Tabs
@@ -280,15 +284,15 @@ void ui_set_current_tab(uint8_t tab) {
     
     while (x < 28) {
         if (text != NULL && ((*text) != 0)) {
-            ui_putc(true, x++, 0, (uint8_t) *(text++), active ? 3 : 2);
+            ui_fg_putc(x++, 0, (uint8_t) *(text++), active ? 3 : 2);
         } else if (finished) {
-            ui_putc(true, x++, 0, 0, 2);
+            ui_fg_putc(x++, 0, 0, 2);
         } else if (*text == 0) {
-            ui_putc(true, x++, 0,
+            ui_fg_putc(x++, 0,
                 active ? UI_GLYPH_TRIANGLE_UR : 0,
                 2
             );
-            ui_putc(true, x++, 0, 0, 2);
+            ui_fg_putc(x++, 0, 0, 2);
 
             active = false;
             uint16_t lk = ui_tabs_to_lks[++tab];
@@ -303,15 +307,15 @@ void ui_set_current_tab(uint8_t tab) {
     }
 
     if (!finished) {
-        ui_putc(true, 26, 0, 0, 2);
-        ui_putc(true, 27, 0, UI_GLYPH_ARROW_RIGHT, 2);
+        ui_fg_putc(26, 0, 0, 2);
+        ui_fg_putc(27, 0, UI_GLYPH_ARROW_RIGHT, 2);
     }
 
     if (ui_current_tab >= 1) {
-        ui_putc(true, 25, 0, 0, 2);
-        ui_putc(true, 26, 0, UI_GLYPH_ARROW_LEFT, 2);
+        ui_fg_putc(25, 0, 0, 2);
+        ui_fg_putc(26, 0, UI_GLYPH_ARROW_LEFT, 2);
         if (finished) {
-            ui_putc(true, 27, 0, 0, 2);
+            ui_fg_putc(27, 0, 0, 2);
         }
     }
 }
@@ -319,12 +323,12 @@ void ui_set_current_tab(uint8_t tab) {
 #define UI_WORK_INDICATOR_X 24
 
 void ui_update_indicators(void) {
-    ui_putc(true, 0, 17, settings_local.active_sram_slot < SRAM_SLOTS ? UI_GLYPH_SRAM_ACTIVE : 0, 2);
+    ui_fg_putc(0, 17, settings_local.active_sram_slot < SRAM_SLOTS ? UI_GLYPH_SRAM_ACTIVE : 0, 2);
     // 1, 17 - low battery glyph (set elsewherer)
 #ifdef USE_SLOT_SYSTEM
-    ui_putc(true, 2, 17, settings_changed ? UI_GLYPH_SETTINGS_CHANGED : 0, 2);
+    ui_fg_putc(2, 17, settings_changed ? UI_GLYPH_SETTINGS_CHANGED : 0, 2);
 #endif
-    ui_putc(true, 3, 17, (inportb(IO_IEEP_CTRL) & IEEP_PROTECT) ? UI_GLYPH_EEPROM_UNLOCKED : 0, 2);
+    ui_fg_putc(3, 17, (inportb(IO_IEEP_CTRL) & IEEP_PROTECT) ? UI_GLYPH_EEPROM_UNLOCKED : 0, 2);
 }
 
 bool ui_poll_events(void) {
@@ -333,7 +337,7 @@ bool ui_poll_events(void) {
 
 #ifdef USE_LOW_BATTERY_WARNING
     if (ui_low_battery_flag == 1 && !ui_dialog_open) {
-        ui_putc(true, 1, 17, UI_GLYPH_LOW_BATTERY, 2);
+        ui_fg_putc(1, 17, UI_GLYPH_LOW_BATTERY, 2);
         ui_low_battery_flag = 2;
         ui_dialog_run(0, 0, LK_DIALOG_LOW_BATTERY, LK_DIALOG_OK);
     }
@@ -367,7 +371,7 @@ static const uint8_t __far ui_work_table[] = {
 
 void ui_step_work_indicator(void) {
     if (ui_work_indicator_vbl_ticks == 0xFF || (ui_work_indicator_vbl_ticks != (vbl_ticks >> 2))) {
-        ui_putc(true, UI_WORK_INDICATOR_X, 17, ui_work_table[ui_work_indicator], 2);
+        ui_fg_putc(UI_WORK_INDICATOR_X, 17, ui_work_table[ui_work_indicator], 2);
         ui_work_indicator = (ui_work_indicator + 1) & 3;
         ui_work_indicator_vbl_ticks = vbl_ticks >> 2;
     }
@@ -376,7 +380,7 @@ void ui_step_work_indicator(void) {
 void ui_clear_work_indicator(void) {
     ui_work_indicator = 0;
     ui_work_indicator_vbl_ticks = 0xFF;
-    ui_putc(true, UI_WORK_INDICATOR_X, 17, ' ', 2);
+    ui_fg_putc(UI_WORK_INDICATOR_X, 17, ' ', 2);
 }
 
 // Menu system
@@ -545,9 +549,9 @@ uint16_t ui_popup_menu_run(ui_popup_menu_state_t *menu) {
     menu->y = 17 - menu->height;
     menu->pos = 0;
 
-    ui_putc(true, 25, 17, ' ', UI_PAL_BARI);
-    ui_putc(true, 26, 17, UI_GLYPH_PASSAGE, UI_PAL_BARI);
-    ui_putc(true, 27, 17, ' ', UI_PAL_BARI);
+    ui_fg_putc(25, 17, ' ', UI_PAL_BARI);
+    ui_fg_putc(26, 17, UI_GLYPH_PASSAGE, UI_PAL_BARI);
+    ui_fg_putc(27, 17, ' ', UI_PAL_BARI);
     input_wait_clear();
 
     wait_for_vblank();
@@ -591,9 +595,9 @@ uint16_t ui_popup_menu_run(ui_popup_menu_state_t *menu) {
     wait_for_vblank();
     ui_reset_alt_screen();
 
-    ui_putc(true, 25, 17, ' ', UI_PAL_BAR);
-    ui_putc(true, 26, 17, UI_GLYPH_PASSAGE, UI_PAL_BAR);
-    ui_putc(true, 27, 17, ' ', UI_PAL_BAR);
+    ui_fg_putc(25, 17, ' ', UI_PAL_BAR);
+    ui_fg_putc(26, 17, UI_GLYPH_PASSAGE, UI_PAL_BAR);
+    ui_fg_putc(27, 17, ' ', UI_PAL_BAR);
 
     input_wait_clear();
     wait_for_vblank();
@@ -618,11 +622,11 @@ void ui_pbar_draw(ui_pbar_state_t *state) {
         uint8_t i = 0;
         uint8_t x = state->x;
         for (i = 8; i <= step_current; i += 8) {
-            ui_putc(false, x++, state->y, 219, UI_PAL_PBAR);
+            ui_bg_putc(x++, state->y, 219, UI_PAL_PBAR);
         }
         step_current &= 7;
         if (step_current > 0) {
-            ui_putc(false, x, state->y, step_current + UI_GLYPH_HORIZONTAL_PBAR, UI_PAL_PBAR);
+            ui_bg_putc(x, state->y, step_current + UI_GLYPH_HORIZONTAL_PBAR, UI_PAL_PBAR);
         }
     }
 }

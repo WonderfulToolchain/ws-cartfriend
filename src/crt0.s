@@ -73,29 +73,24 @@ _start:
 
 	// CartFriend end
 
-	// copy rodata/data from ROM to RAM
-	//mov	ax, offset "__erom!"
-#ifdef __IA16_CMODEL_IS_FAR_TEXT
 	// set DS to the location of rodata
-	.byte	0xB8
-	.reloc	., R_386_SEG16, "__erom!"
-	.word	0
+        .reloc  .+1, R_386_SEG16, "__erom!"
+        mov     ax, 0
 	mov	ds, ax
-#endif
+
+	// copy rodata/data from ROM to RAM
+	xor	ax, ax
+	mov	es, ax
+	mov	ss, ax
 	mov	si, offset "__erom&"
 	mov	di, offset "__sdata"
 	mov	cx, offset "__lwdata"
-#ifndef __IA16_CMODEL_IS_FAR_TEXT
-	// set DS to the location of rodata
-	push cs
-	pop ds
-#endif
 	cld
 	rep	movsw
 
 	// initialize segments
 	// (es/ss) initialized above
-	xor	ax, ax
+	// xor	ax, ax - done above
 	mov	ds, ax
 
 	// clear int enable
@@ -111,12 +106,8 @@ _start:
 	out	0xB0, al
 
 #ifdef __IA16_CMODEL_IS_FAR_TEXT
-	//.reloc	.+3, R_386_SEG16, main
-	//jmp 0:main
-	.byte	0xEA
-	.word	main
-	.reloc	., R_386_SEG16, "main!"
-	.word	0
+	.reloc	.+3, R_386_SEG16, "main!"
+	jmp 0:main
 #else
 	jmp main
 #endif

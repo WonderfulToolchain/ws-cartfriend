@@ -77,9 +77,9 @@ void ui_osk_draw(ui_osk_state_t *osk, uint8_t what) {
                     first_null = true;
                     c = 219;
                 }  
-                ui_putc(true, osk->xt + i, osk->y + 1, c, UI_PAL_DIALOG);
+                ui_fg_putc(osk->xt + i, osk->y + 1, c, UI_PAL_DIALOG);
             } else {
-                ui_putc(true, osk->xt + i, osk->y + 1, *(buf_ptr++), UI_PAL_DIALOG);
+                ui_fg_putc(osk->xt + i, osk->y + 1, *(buf_ptr++), UI_PAL_DIALOG);
             }
         }
     }
@@ -91,7 +91,7 @@ void ui_osk_draw(ui_osk_state_t *osk, uint8_t what) {
                 bool active = (ox == osk->osk_x) && (oy == osk->osk_y);
                 uint16_t c = (uint8_t) (*layout_ptr);
                 if (c == 32) c = UI_GLYPH_SPACE_BAR_ICON;
-                ui_putc(true, osk->xb + ox * 2, osk->y + 3 + oy * 2, c, active ? UI_PAL_DIALOGI : UI_PAL_DIALOG);
+                ui_fg_putc(osk->xb + ox * 2, osk->y + 3 + oy * 2, c, active ? UI_PAL_DIALOGI : UI_PAL_DIALOG);
             }
         }
         {
@@ -138,8 +138,8 @@ bool ui_osk_run(uint16_t flags, char *buf, uint8_t buf_width) {
     ws_screen_fill_tiles(SCREEN2, SCR_ENTRY_PALETTE(UI_PAL_DIALOG), x, osk.y, width, height);
 
     // pre-draw some elements
-    ui_putc(true, osk.xt - 1, osk.y + 1, '[', UI_PAL_DIALOG);
-    ui_putc(true, osk.xt + buf_width, osk.y + 1, ']', UI_PAL_DIALOG);
+    ui_fg_putc(osk.xt - 1, osk.y + 1, '[', UI_PAL_DIALOG);
+    ui_fg_putc(osk.xt + buf_width, osk.y + 1, ']', UI_PAL_DIALOG);
 
     uint8_t to_draw = OSK_DRAW_ALL;
     bool result = false;

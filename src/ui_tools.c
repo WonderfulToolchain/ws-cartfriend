@@ -49,7 +49,7 @@ static void ui_tool_xmodem_ui_step(uint32_t bytes) {
     uint8_t line = inportb(IO_LCD_LINE);
     if (line >= 136 || line < 72) {
         ui_fill_line(14, 0);
-        ui_printf_centered(false, 14, 0, lang_keys[LK_UI_XMODEM_BYTE_PROGRESS], bytes);
+        ui_bg_printf_centered(14, 0, lang_keys[LK_UI_XMODEM_BYTE_PROGRESS], bytes);
     }
     ui_step_work_indicator();
 }

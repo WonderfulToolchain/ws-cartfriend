@@ -297,7 +297,7 @@ _drs_no_byte:
 	pop	si
 
 	call driver_slot_finish_error_check
-	ASM_PLATFORM_RET 0x4
+	retf 0x4
 
 	.align 2
 driver_write_slot:
@@ -402,7 +402,7 @@ dws_driver_flash_busyloop_until_done:
 
 	call driver_slot_finish_error_check
 	mov al, 1
-	ASM_PLATFORM_RET 0x4
+	retf 0x4
 
 	.align 2
 driver_erase_bank:
@@ -450,7 +450,7 @@ deb_driver_flash_busyloop_until_done:
 	call driver_slot_finish_error_check
 driver_erase_bank_finish:
 	mov al, 1
-	ASM_PLATFORM_RET
+	retf
 
 	.align 2
 # check if the slot was correctly remounted

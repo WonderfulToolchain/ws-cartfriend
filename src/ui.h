@@ -47,12 +47,13 @@ void ui_reset_main_screen(void);
 void ui_reset_alt_screen(void);
 void ui_scroll(int8_t offset);
 void ui_fill_line(uint8_t y, uint8_t color);
-void ui_putc(bool alt_screen, uint8_t x, uint8_t y, uint16_t chr, uint8_t color);
+void ui_bg_putc(uint8_t x, uint8_t y, uint16_t chr, uint8_t color);
+void ui_fg_putc(uint8_t x, uint8_t y, uint16_t chr, uint8_t color);
 void ui_puts(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* buf);
 void ui_puts_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* buf);
-__attribute__((format(printf, 5, 6))) void ui_printf(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
-__attribute__((format(printf, 4, 5))) void ui_printf_centered(bool alt_screen, uint8_t y, uint8_t color, const char __far* format, ...);
-__attribute__((format(printf, 5, 6))) void ui_printf_right(bool alt_screen, uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
+__attribute__((format(printf, 4, 5))) void ui_bg_printf(uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
+__attribute__((format(printf, 3, 4))) void ui_bg_printf_centered(uint8_t y, uint8_t color, const char __far* format, ...);
+__attribute__((format(printf, 4, 5))) void ui_bg_printf_right(uint8_t x, uint8_t y, uint8_t color, const char __far* format, ...);
 
 #define UI_THEME_COUNT 3
 void ui_update_theme(uint8_t current_theme);
@@ -65,10 +66,10 @@ uint8_t ui_set_language(uint8_t id);
 #define UI_GLYPH_SETTINGS_CHANGED 20 // 2, 17
 #define UI_GLYPH_EEPROM_UNLOCKED 21 // 3, 17
 #define UI_GLYPH_SPACE_BAR_ICON 28
-#define UI_GLYPH_TRIANGLE_UR 169
-#define UI_GLYPH_TRIANGLE_UL 170
-#define UI_GLYPH_PASSAGE 183
-#define UI_GLYPH_HORIZONTAL_PBAR 183 // + 1
+#define UI_GLYPH_TRIANGLE_UR 22
+#define UI_GLYPH_TRIANGLE_UL 23
+#define UI_GLYPH_PASSAGE 127
+#define UI_GLYPH_HORIZONTAL_PBAR 183
 
 // Tabs
 
