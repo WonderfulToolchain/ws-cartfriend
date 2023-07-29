@@ -29,8 +29,6 @@
 #include "input.h"
 #include "ui.h"
 #include "util.h"
-#include "ws/serial.h"
-#include "ws/system.h"
 #include "xmodem.h"
 
 #define SOH 1

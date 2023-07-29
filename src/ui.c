@@ -28,9 +28,6 @@
 #include "ui.h"
 #include "../res/font_default.h"
 #include "util.h"
-#include "ws/display.h"
-#include "ws/hardware.h"
-#include "ws/system.h"
 
 const char __far* const __far* lang_keys;
 #ifdef USE_LOW_BATTERY_WARNING

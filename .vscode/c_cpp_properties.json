@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Wonderful (gcc-ia16-elf)",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/opt/wonderful/toolchain/gcc-ia16-elf/bin/ia16-elf-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compileCommands": "${workspaceFolder}/compile_commands.json"
+        }
+    ],
+    "version": 4
+}

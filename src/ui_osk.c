@@ -23,7 +23,6 @@
 #include "settings.h"
 #include "ui.h"
 #include "util.h"
-#include "ws/display.h"
 
 extern bool ui_dialog_open;
 

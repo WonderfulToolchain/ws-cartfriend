@@ -1,0 +1,5 @@
+{
+    "clangd.arguments": [
+        "--query-driver=/opt/wonderful/toolchain/gcc-ia16-elf/bin/ia16-elf-gcc"
+    ]
+}

@@ -22,8 +22,6 @@
 #include "lang.h"
 #include "ui.h"
 #include "util.h"
-#include "ws/display.h"
-#include "ws/hardware.h"
 
 #define SPRITE_TABLE ((uint8_t*) 0x3C80)
 

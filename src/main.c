@@ -24,8 +24,6 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
-#include "ws/hardware.h"
-#include "ws/system.h"
 
 // Memory map:
 // 0x0000 - 0x1800: Heap

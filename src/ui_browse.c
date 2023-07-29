@@ -27,7 +27,6 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
-#include "ws/hardware.h"
 
 #ifdef USE_SLOT_SYSTEM
 

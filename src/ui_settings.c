@@ -25,7 +25,6 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
-#include "ws/system.h"
 
 typedef enum {
     MENU_OPT_SAVEMAP,

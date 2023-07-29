@@ -26,16 +26,16 @@ vpath %.s $(SRCDIRS)
 
 .PHONY: all clean install
 
-all: CartFriend_$(TARGET).wsc
+all: CartFriend_$(TARGET).wsc compile_commands.json
 
 CartFriend_$(TARGET).wsc: $(OBJECTS) | $(OBJDIR)
 	$(ROMLINK) -v -o $@ --output-elf $@.elf -- $(OBJECTS) $(LDFLAGS) $(LIBS)
 
 $(OBJDIR)/%.o: %.c | $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -MJ $(patsubst %.o,%.cc.json,$@) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.s | $(OBJDIR)
-	$(CC) -x assembler-with-cpp $(CFLAGS) -c -o $@ $<
+	$(CC) -x assembler-with-cpp $(CFLAGS) -MJ $(patsubst %.o,%.cc.json,$@) -c -o $@ $<
 
 $(OBJDIR):
 	$(info $(shell mkdir -p $(MKDIRS)))
@@ -43,5 +43,9 @@ $(OBJDIR):
 clean:
 	rm -r $(OBJDIR)/*
 	rm CartFriend_$(TARGET).wsc CartFriend_$(TARGET).elf
+
+compile_commands.json: $(OBJECTS) | Makefile
+	@echo "  MERGE   compile_commands.json"
+	$(_V)$(WF)/bin/wf-compile-commands-merge $@ $(patsubst %.o,%.cc.json,$^)
 
 -include $(DEPS)
