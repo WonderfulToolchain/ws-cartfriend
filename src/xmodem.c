@@ -68,7 +68,7 @@ static uint8_t xmodem_read_block(uint8_t __far* block) {
 	for (uint16_t i = 0; i < XMODEM_BLOCK_SIZE; i++) {
 		uint8_t v = ws_serial_getc();
 		checksum += v;
-		if (block != NULL) { 
+		if (block != NULL) {
 			block[i] = v;
 		}
 	}
@@ -94,7 +94,7 @@ static void xmodem_write_block(const uint8_t __far* block) {
 uint8_t xmodem_recv_start(void) {
 	xmodem_idx = 1;
 	ws_serial_putc(NAK);
-	
+
 	return XMODEM_OK;
 }
 
@@ -127,9 +127,6 @@ uint8_t xmodem_recv_block(uint8_t __far* block) {
 				ws_serial_putc(NAK);
 			}
 		}
-
-		ws_hwint_enable(HWINT_SERIAL_RX);
-		cpu_halt();
 	}
 }
 
@@ -141,6 +138,9 @@ void xmodem_recv_ack(void) {
 uint8_t xmodem_send_start(void) {
 	xmodem_idx = 1;
 
+	cpu_irq_disable();
+	ws_hwint_enable(HWINT_SERIAL_RX);
+
 	while (!xmodem_poll_exit()) {
 		int16_t r = ws_serial_getc_nonblock();
 		if (r >= 0) {
@@ -151,8 +151,7 @@ uint8_t xmodem_send_start(void) {
 			}
 		}
 
-		ws_hwint_enable(HWINT_SERIAL_RX);
-		cpu_halt();
+                __asm volatile ("sti\nhlt\ncli");
 	}
 	return XMODEM_SELF_CANCEL;
 }
@@ -176,8 +175,6 @@ WriteAgain:
 			}
 		}
 
-		ws_hwint_enable(HWINT_SERIAL_RX);
-		cpu_halt();
 	}
 	return XMODEM_SELF_CANCEL;
 }
@@ -199,9 +196,6 @@ WriteAgain:
 				return XMODEM_OK;
 			}
 		}
-
-		ws_hwint_enable(HWINT_SERIAL_RX);
-		cpu_halt();
 	}
 	return XMODEM_SELF_CANCEL;
 }
