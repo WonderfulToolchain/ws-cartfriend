@@ -370,10 +370,11 @@ static const uint8_t __far ui_work_table[] = {
 };
 
 void ui_step_work_indicator(void) {
-    if (ui_work_indicator_vbl_ticks == 0xFF || (ui_work_indicator_vbl_ticks != (vbl_ticks >> 2))) {
+    uint16_t ticks = vbl_ticks >> 2;
+    if (ui_work_indicator_vbl_ticks == 0xFF || (ui_work_indicator_vbl_ticks != ticks)) {
         ui_fg_putc(UI_WORK_INDICATOR_X, 17, ui_work_table[ui_work_indicator], 2);
         ui_work_indicator = (ui_work_indicator + 1) & 3;
-        ui_work_indicator_vbl_ticks = vbl_ticks >> 2;
+        ui_work_indicator_vbl_ticks = ticks;
     }
 }
 

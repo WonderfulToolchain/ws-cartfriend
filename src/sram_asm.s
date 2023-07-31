@@ -23,8 +23,8 @@
 	.intel_syntax noprefix
 
 #ifdef USE_SLOT_SYSTEM
-	.global sram_copy_buffer_checkff
-sram_copy_buffer_checkff:
+	.global sram_copy_to_buffer_check_flash
+sram_copy_to_buffer_check_flash:
 	push	si
 	push	di
 	push	ds
@@ -35,36 +35,65 @@ sram_copy_buffer_checkff:
 	mov si, dx
 	xor ax, ax
 	mov es, ax
-	mov dx, ax
-	dec dx
+	mov dx, 0xFFFF
 	mov ah, 0x10
 	mov ds, ax
-	mov cx, 0x80
+	mov cx, 0x80 // 128 words = 256 bytes
 	cld
 sram_copy_buffer_checkff_loop:
-	lodsw
-	stosw
-	cmp ax, dx
-	dec cx
-	jnz sram_copy_buffer_checkff_loop_found_data_postdec
-	lodsw
-	stosw
-	cmp ax, dx
-	jnz sram_copy_buffer_checkff_loop_found_data
-	loop sram_copy_buffer_checkff_loop
-	mov al, 0
-	jmp sram_copy_buffer_checkff_loop_done
+.rept 4
+	lodsw // 3 cycles
+	stosw // 3 cycles
+	cmp ax, dx // 1 cycle
+	jnz sram_copy_buffer_checkff_loop_found_data // 1 cycle
+	dec cx // 1 cycle
+.endr
+	jnz sram_copy_buffer_checkff_loop // 4 cycles
 
+	// all 0xFFFF
+	mov al, 0
+	pop	es
+	pop	ds
+	pop	di
+	pop	si
+	ASM_PLATFORM_RET
+
+	.align 2
 sram_copy_buffer_checkff_loop_found_data:
 	dec cx
-sram_copy_buffer_checkff_loop_found_data_postdec:
 	mov al, 1
 	rep movsw
 
 sram_copy_buffer_checkff_loop_done:
 	pop	es
-	pop ds
+	pop	ds
 	pop	di
 	pop	si
 	ASM_PLATFORM_RET
+
+	// 0x3000:offset => 0x1000:offset
+	.global sram_copy_from_bank1
+sram_copy_from_bank1:
+	push	si
+	push	di
+	push	ds
+	push	es
+
+	mov si, ax
+	mov di, ax
+	mov ax, 0x1000
+	mov es, ax // es:di = 0x1000:offset
+	mov ah, 0x30
+	mov ds, ax // ds:si = 0x3000:offset
+	mov cx, dx // cx = words
+	cld
+	rep movsw
+
+	pop	es
+	pop	ds
+	pop	di
+	pop	si
+	ASM_PLATFORM_RET
+
+
 #endif
