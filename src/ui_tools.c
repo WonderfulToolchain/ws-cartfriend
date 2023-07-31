@@ -15,6 +15,7 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
+#include <stdbool.h>
 #include <string.h>
 #include <wonderful.h>
 #include <ws.h>
@@ -24,14 +25,17 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
+#include "ws/system.h"
 #include "xmodem.h"
 #include "../res/wsmonitor.h"
 
-#define MENU_TOOL_SRAMCODE_XM 0
-#define MENU_TOOL_WSMONITOR 1
-#define MENU_TOOL_WSMONITOR_RAM 2
+#define MENU_TOOL_BFBCODE_XM 0
+#define MENU_TOOL_SRAMCODE_XM 1
+#define MENU_TOOL_WSMONITOR 2
+#define MENU_TOOL_WSMONITOR_RAM 3
 
 static uint16_t __far ui_tool_lks[] = {
+    LK_UI_TOOLS_BFBCODE_XM,
     LK_UI_TOOLS_SRAMCODE_XM,
     LK_UI_TOOLS_WSMONITOR,
     LK_UI_TOOLS_WSMONITOR_RAM
@@ -52,6 +56,80 @@ static void ui_tool_xmodem_ui_step(uint32_t bytes) {
         ui_bg_printf_centered(14, 0, lang_keys[LK_UI_XMODEM_BYTE_PROGRESS], bytes);
     }
     ui_step_work_indicator();
+}
+
+static void ui_tool_sramcode_bfb() {
+    uint8_t buffer[128];
+
+    ui_reset_main_screen();
+    ui_puts_centered(false, 2, 0, lang_keys[LK_UI_XMODEM_RECEIVE]);
+    ui_puts_centered(false, 3, 0, lang_keys[LK_UI_XMODEM_PRESS_B_TO_CANCEL]);
+
+    uint8_t __far* code_start_ptr;
+    uint8_t __far* code_ptr = buffer;
+    uint16_t code_blocks_left = 0xFFFF;
+    bool code_offset0 = false;
+    bool active = true;
+
+    xmodem_open_default();
+    if (xmodem_recv_start() == XMODEM_OK) {
+        ui_tool_xmodem_ui_message(LK_UI_XMODEM_IN_PROGRESS);
+
+        while (active) {
+            uint8_t result = xmodem_recv_block(code_ptr);
+            switch (result) {
+                case XMODEM_COMPLETE:
+                    launch_ram(code_start_ptr);
+                    break;
+                case XMODEM_SELF_CANCEL:
+                case XMODEM_CANCEL:
+                    active = false;
+                    break;
+                case XMODEM_OK:
+                    if (code_blocks_left == 0xFFFF) {
+                        if (buffer[0] != 'b' || buffer[1] != 'F') {
+                            ui_tool_xmodem_ui_message(LK_UI_XMODEM_INVALID_FILE);
+                            active = false;
+                            break;
+                        } else {
+                            uint16_t code_start = *((uint16_t *) (buffer + 2));
+                            if (code_start == 0xFFFF) {
+                                code_start = 0x6800;
+                                code_start_ptr = MK_FP(0x0680, 0x0000);
+                                code_offset0 = true;
+                            } else {
+                                code_start_ptr = MK_FP(0x0000, code_start);
+                            }
+                            if (code_start < 0x6800 || code_start > 0xFD80) {
+                                ui_tool_xmodem_ui_message(LK_UI_XMODEM_INVALID_FILE);
+                                active = false;
+                                break;
+                            } else {
+                                code_blocks_left = (0xFE00 - code_start - 124) >> 7;
+                                code_ptr = code_start_ptr;
+                                memcpy(code_ptr, buffer + 4, 124);
+                                code_ptr += 124;
+                                xmodem_recv_ack();
+                                break;
+                            }
+                        }
+                    } else if (code_blocks_left--) {
+                        code_ptr += 128;
+                        xmodem_recv_ack();
+                        break;
+                    }
+                    // fall through to XMODEM_ERROR
+                case XMODEM_ERROR:
+                    ui_tool_xmodem_ui_message(LK_UI_XMODEM_ERROR);
+                    active = false;
+                    break;
+            }
+        }
+    }
+
+    ui_clear_work_indicator();
+    xmodem_close();
+    while (!xmodem_poll_exit()) cpu_halt();
 }
 
 static void ui_tool_sramcode_xm() {
@@ -104,6 +182,7 @@ static void ui_tool_sramcode_xm() {
 void ui_tools(void) {
     uint8_t menu_list[16];
     uint8_t i = 0;
+    if (ws_system_color_active()) menu_list[i++] = MENU_TOOL_BFBCODE_XM;
     if ((_CS & 0xF000) != 0x1000) menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
     menu_list[i++] = MENU_TOOL_WSMONITOR;
     menu_list[i++] = MENU_TOOL_WSMONITOR_RAM;
@@ -118,6 +197,7 @@ void ui_tools(void) {
 
     uint16_t result = ui_menu_select(&menu);
     switch (result) {
+        case MENU_TOOL_BFBCODE_XM: ui_tool_sramcode_bfb(); break;
         case MENU_TOOL_SRAMCODE_XM: ui_tool_sramcode_xm(); break;
         case MENU_TOOL_WSMONITOR: launch_ram(_wsmonitor_bin); break;
         case MENU_TOOL_WSMONITOR_RAM: {
