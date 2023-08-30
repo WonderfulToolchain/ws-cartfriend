@@ -31,10 +31,11 @@ static void clear_registers(bool disable_color_mode) {
 
     if (ws_system_color_active()) {
         _nmemset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
-        outportb(IO_SYSTEM_CTRL2, 0x0A);
+        uint8_t ctrl2 = 0x0A;
         if (settings_local.flags1 & SETT_FLAGS1_FORCE_FAST_SRAM) {
-            sram_enable_fast();
+            ctrl2 &= ~SYSTEM_CTRL2_SRAM_WAIT;
         }
+        outportb(IO_SYSTEM_CTRL2, ctrl2);
     }
 
     outportw(IO_DISPLAY_CTRL, 0);

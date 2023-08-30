@@ -119,7 +119,6 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
 void sram_erase(uint8_t sram_slot) {
     ui_reset_main_screen();
     ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_ERASE_SRAM]);
-    sram_enable_fast();
 
     ui_pbar_state_t pbar = {
         .x = 1,
@@ -176,7 +175,6 @@ void sram_erase(uint8_t sram_slot) {
         }
     }
 
-    sram_disable_fast();
     ui_update_indicators();
 }
 
@@ -198,8 +196,6 @@ void sram_switch_to_slot(uint8_t sram_slot) {
         error_critical(ERROR_CODE_SRAM_SLOT_OVERFLOW_SWITCH, sram_slot);
     }
 
-    sram_enable_fast();
-
     if (settings_local.active_sram_slot < SRAM_SLOTS) {
         sram_backup_restore_slot(settings_local.active_sram_slot, false);
         settings_local.active_sram_slot = SRAM_SLOT_NONE;
@@ -211,8 +207,6 @@ void sram_switch_to_slot(uint8_t sram_slot) {
         settings_local.active_sram_slot = sram_slot;
         settings_mark_changed();
     }
-
-    sram_disable_fast();
 }
 #else
 void sram_switch_to_slot(uint8_t sram_slot) {

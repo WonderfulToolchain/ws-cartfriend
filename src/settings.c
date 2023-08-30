@@ -22,6 +22,7 @@
 #include "error.h"
 #include "lang.h"
 #include "settings.h"
+#include "sram.h"
 #include "ui.h"
 #include "util.h"
 

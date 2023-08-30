@@ -44,11 +44,11 @@ void __far vblank_int_handler(void) {
 
 void main(void) {
 	outportb(IO_INT_NMI_CTRL, 0);
-	sram_disable_fast();
 
 	cpu_irq_disable();
 	ws_hwint_set_handler(HWINT_IDX_VBLANK, vblank_int_handler);
 	ws_hwint_enable(HWINT_VBLANK);
+	sram_enable_fast();
 	cpu_irq_enable();
 
 	ui_init();

@@ -139,7 +139,7 @@ static void ui_tool_sramcode_xm() {
     ui_puts_centered(false, 2, 0, lang_keys[LK_UI_XMODEM_RECEIVE]);
     ui_puts_centered(false, 3, 0, lang_keys[LK_UI_XMODEM_PRESS_B_TO_CANCEL]);
 
-    uint8_t __far* sram_ptr = MK_FP(0x1000, 0x0000);
+    uint8_t __far* sram_ptr = MK_FP(0x1000, 0x0010);
     uint16_t sram_incrs = 0;
     bool active = true;
 
@@ -151,7 +151,7 @@ static void ui_tool_sramcode_xm() {
             uint8_t result = xmodem_recv_block(sram_ptr);
             switch (result) {
                 case XMODEM_COMPLETE:
-                    launch_ram(MK_FP(0x1000, 0x0000));
+                    launch_ram(MK_FP(0x1000, 0x0010));
                     break;
                 case XMODEM_SELF_CANCEL:
                 case XMODEM_CANCEL:
