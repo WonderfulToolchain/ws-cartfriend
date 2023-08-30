@@ -31,7 +31,7 @@ static void clear_registers(bool disable_color_mode) {
 
     if (ws_system_color_active()) {
         _nmemset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
-        uint8_t ctrl2 = 0x0A;
+        uint8_t ctrl2 = disable_color_mode ? 0x0A : 0x8A;
         if (settings_local.flags1 & SETT_FLAGS1_FORCE_FAST_SRAM) {
             ctrl2 &= ~SYSTEM_CTRL2_SRAM_WAIT;
         }
