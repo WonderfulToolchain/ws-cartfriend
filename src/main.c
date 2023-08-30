@@ -44,6 +44,7 @@ void __far vblank_int_handler(void) {
 
 void main(void) {
 	outportb(IO_INT_NMI_CTRL, 0);
+	sram_disable_fast();
 
 	cpu_irq_disable();
 	ws_hwint_set_handler(HWINT_IDX_VBLANK, vblank_int_handler);

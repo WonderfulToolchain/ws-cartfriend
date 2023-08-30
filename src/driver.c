@@ -20,7 +20,9 @@
 #include <ws.h>
 #include "driver.h"
 #include "settings.h"
+#include "sram.h"
 #include "util.h"
+#include "ws/hardware.h"
 
 static void clear_registers(bool disable_color_mode) {
     // wait for vblank, disable display, reset some registers
@@ -29,7 +31,10 @@ static void clear_registers(bool disable_color_mode) {
 
     if (ws_system_color_active()) {
         _nmemset(MEM_COLOR_PALETTE(0), 0xFF, 0x200);
-        ws_mode_set(WS_MODE_MONO);
+        outportb(IO_SYSTEM_CTRL2, 0x0A);
+        if (settings_local.flags1 & SETT_FLAGS1_FORCE_FAST_SRAM) {
+            sram_enable_fast();
+        }
     }
 
     outportw(IO_DISPLAY_CTRL, 0);

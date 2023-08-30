@@ -18,6 +18,14 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <wonderful.h>
+#include <ws.h>
 
+static inline void sram_enable_fast(void) {
+    outportb(IO_SYSTEM_CTRL2, inportb(IO_SYSTEM_CTRL2) & (~SYSTEM_CTRL2_SRAM_WAIT));
+}
+static inline void sram_disable_fast(void) {
+    outportb(IO_SYSTEM_CTRL2, inportb(IO_SYSTEM_CTRL2) | SYSTEM_CTRL2_SRAM_WAIT);
+}
 void sram_erase(uint8_t sram_slot);
 void sram_switch_to_slot(uint8_t sram_slot);

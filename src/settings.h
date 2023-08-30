@@ -53,6 +53,7 @@ typedef struct __attribute__((packed)) {
 #define SETT_FLAGS1_UNLOCK_IEEP_NEXT_BOOT 0x04
 #define SETT_FLAGS1_SERIAL_9600BPS 0x08
 #define SETT_FLAGS1_WIDE_SCREEN 0x10
+#define SETT_FLAGS1_FORCE_FAST_SRAM 0x20
 
 extern settings_t settings_local;
 extern bool settings_changed;

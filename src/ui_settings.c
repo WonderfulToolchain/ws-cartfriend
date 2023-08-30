@@ -98,14 +98,16 @@ typedef enum {
     MENU_ADV_FORCECARTSRAM,
     MENU_ADV_BUFFERED_WRITES,
     MENU_ADV_UNLOCK_IEEP,
-    MENU_ADV_SERIAL_RATE
+    MENU_ADV_SERIAL_RATE,
+    MENU_ADV_FORCE_FAST_SRAM
 } ui_adv_id_t;
 
 static uint16_t __far ui_adv_lks[] = {
     LK_UI_SETTINGS_FORCECARTSRAM,
     LK_UI_SETTINGS_BUFFERED_WRITES,
     LK_UI_SETTINGS_UNLOCK_IEEP,
-    LK_UI_SETTINGS_SERIAL_RATE
+    LK_UI_SETTINGS_SERIAL_RATE,
+    LK_UI_SETTINGS_FORCE_FAST_SRAM,
 };
 
 static void build_line_yesno(bool yes, char *buf_right, int buf_right_len) {
@@ -123,6 +125,8 @@ static void ui_adv_menu_build_line(uint8_t entry_id, void *userdata, char *buf, 
     } else if (entry_id == MENU_ADV_SERIAL_RATE) {
         bool is9600 = settings_local.flags1 & SETT_FLAGS1_SERIAL_9600BPS;
         strncpy(buf_right, lang_keys[is9600 ? LK_UI_SETTINGS_SERIAL_RATE_9600 : LK_UI_SETTINGS_SERIAL_RATE_38400], buf_right_len);
+    } else if (entry_id == MENU_ADV_FORCE_FAST_SRAM) {
+        build_line_yesno(settings_local.flags1 & SETT_FLAGS1_FORCE_FAST_SRAM, buf_right, buf_right_len);
     }
 }
 
@@ -200,6 +204,7 @@ static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, 
 
 static void ui_settings_advanced(uint8_t *menu_list) {
     uint8_t i = 0;
+    menu_list[i++] = MENU_ADV_FORCE_FAST_SRAM;
     menu_list[i++] = MENU_ADV_BUFFERED_WRITES;
     menu_list[i++] = MENU_ADV_SERIAL_RATE;
     // menu_list[i++] = MENU_ADV_CART_AVR_DELAY;
@@ -237,6 +242,10 @@ Reselect:
         goto Reselect;
     } else if (result == MENU_ADV_SERIAL_RATE) {
         settings_local.flags1 ^= SETT_FLAGS1_SERIAL_9600BPS;
+        settings_mark_changed();
+        goto Reselect;
+    } else if (result == MENU_ADV_FORCE_FAST_SRAM) {
+        settings_local.flags1 ^= SETT_FLAGS1_FORCE_FAST_SRAM;
         settings_mark_changed();
         goto Reselect;
     } /* else if (result == MENU_ADV_CART_AVR_DELAY) {
