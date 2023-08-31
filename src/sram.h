@@ -22,10 +22,10 @@
 #include <ws.h>
 
 static inline void sram_enable_fast(void) {
-    outportb(IO_SYSTEM_CTRL2, inportb(IO_SYSTEM_CTRL2) & (~SYSTEM_CTRL2_SRAM_WAIT));
+    outportb(IO_SYSTEM_CTRL2, inportb(IO_SYSTEM_CTRL2) & (~(SYSTEM_CTRL2_SRAM_WAIT | SYSTEM_CTRL2_CART_IO_WAIT)));
 }
 static inline void sram_disable_fast(void) {
-    outportb(IO_SYSTEM_CTRL2, inportb(IO_SYSTEM_CTRL2) | SYSTEM_CTRL2_SRAM_WAIT);
+    outportb(IO_SYSTEM_CTRL2, inportb(IO_SYSTEM_CTRL2) | (SYSTEM_CTRL2_SRAM_WAIT | SYSTEM_CTRL2_CART_IO_WAIT));
 }
 void sram_erase(uint8_t sram_slot);
 void sram_switch_to_slot(uint8_t sram_slot);
