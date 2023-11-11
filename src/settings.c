@@ -26,17 +26,18 @@
 #include "ui.h"
 #include "util.h"
 
-// Saving a 1KB settings block across 128 slots allows for wear leveling.
+// Saving a 1KB settings block across 127 slots allows for wear leveling.
 // Given that one block of WSFM flash is rated for 100,000 erases, this should give >12 million
 // settings changes over the lifespan of the device.
 // (I'd have preferred an SD card slot, but you gotta work with what you gotta work with.)
 
-#define SETTINGS_BANK 0xF8
-#define MAX_SETTINGS_SLOT 127
+#define SETTINGS_BANK 0xF4
+#define LEGACY_SETTINGS_BANK 0xF8
 
 uint8_t settings_slot;
 settings_t settings_local;
 bool settings_changed;
+bool settings_location_legacy;
 const char __far settings_magic[4] = {'w', 'f', 'C', 'F'};
 
 void settings_reset(void) {
@@ -64,8 +65,8 @@ void settings_reset(void) {
     settings_local.active_sram_slot = SRAM_SLOT_FIRST_BOOT;
     settings_local.color_theme = 0x02;
 
+    settings_slot = 127;
     settings_changed = true;
-    settings_slot = MAX_SETTINGS_SLOT;
 }
 
 static inline uint16_t settings_calculate_crc(void) {
@@ -101,43 +102,89 @@ static void settings_migrate(void) {
     settings_local.version = SETTINGS_VERSION;
 }
 
+static bool try_settings_load(uint8_t settings_bank, uint8_t slot_start, uint8_t slot_end) {
+    if (driver_get_launch_slot() != 0xFF) {
+        settings_slot = slot_end;
+        while (true) {
+            uint8_t bank = settings_bank + (settings_slot >> 6);
+            uint16_t offset = settings_slot << 10;
+            _nmemset(&settings_local, 0, 6);
+            driver_read_slot(&settings_local, driver_get_launch_slot(), bank, offset, 6);
+
+            if (!memcmp(settings_magic, &settings_local, 4)) {
+                bool read_ok = driver_read_slot(((uint8_t*) &settings_local) + 6, driver_get_launch_slot(), bank, offset + 6, sizeof(settings_local) - 6);
+                uint16_t settings_crc;
+                read_ok &= driver_read_slot(&settings_crc, driver_get_launch_slot(), bank, offset + 1022, 2);
+                if (read_ok) {
+                    uint16_t settings_crc_calculated = settings_calculate_crc();
+                    // TODO: check settings CRC
+                    return true;
+                }
+            }
+            
+            if (settings_slot == slot_start) return false;
+            settings_slot--;
+        }
+    }
+    return false;
+}
+
+static const uint8_t bootstrap_data[] = {
+    // 16 bytes of NOP sled
+    0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
+    // jmp far e0000:0000
+    0xea, 0x00, 0x00, 0x00, 0xe0
+};
+
+static void settings_erase_slots(void) {
+    driver_erase_bank(0, driver_get_launch_slot(), SETTINGS_BANK);
+    driver_write_slot(bootstrap_data, driver_get_launch_slot(), SETTINGS_BANK, 0, sizeof(bootstrap_data));
+    settings_slot = 1;
+}
+
 void settings_load(void) {
     settings_changed = false;
-    bool settings_found = false;
+    settings_location_legacy = false;
 
 #ifndef USE_SLOT_SYSTEM
     settings_reset();
     return;
 #else
-    if (driver_get_launch_slot() != 0xFF) {
-        settings_slot = MAX_SETTINGS_SLOT;
-        while (settings_slot <= MAX_SETTINGS_SLOT) {
-            _nmemset(&settings_local, 0, 6);
-            driver_read_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), settings_slot << 10, 6);
-
-            if (!memcmp(settings_magic, &settings_local, 4)) {
-                bool read_ok = driver_read_slot(((uint8_t*) &settings_local) + 6, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 6, sizeof(settings_local) - 6);
-                uint16_t settings_crc;
-                read_ok &= driver_read_slot(&settings_crc, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 1022, 2);
-                if (read_ok) {
-                    uint16_t settings_crc_calculated = settings_calculate_crc();
-                    // TODO: check settings CRC
-                    settings_found = true;
-                    break;
-                }
-            } else {
-                settings_slot--;
-            }
-        }
-    }
-
-    if (!settings_found) {
-        settings_reset();
-    } else {
+    if (try_settings_load(SETTINGS_BANK, 1, 127)) {
         settings_migrate();
+        return;
     }
+
+    // CartFriend <= 0.1.4 stores settings in bank 0xF8
+    if (try_settings_load(LEGACY_SETTINGS_BANK, 0, 127)) {
+        settings_location_legacy = true;
+        settings_migrate();
+        
+        // init UI
+        settings_refresh();
+	    ui_set_current_tab(0);
+        wait_for_vblank();
+        ui_show();
+        outportb(IO_LCD_SEG, LCD_SEG_ORIENT_H);
+		ui_reset_main_screen();
+
+        // load bank 14 to SRAM -> set settings location to new -> unload bank 14 from SRAM
+        sram_switch_to_slot(14);
+        settings_location_legacy = false;
+        sram_switch_to_slot(0xFF);
+
+        // force new slot write
+        settings_slot = 127;
+        settings_changed = true;
+        settings_save();
+        return;
+    }
+
+    // New install.
+    settings_reset();
 #endif
 }
+
 
 void settings_refresh(void) {
 	ui_update_theme(settings_local.color_theme);
@@ -156,9 +203,8 @@ void settings_save(void) {
 
     ui_step_work_indicator();
 
-    if (settings_slot >= MAX_SETTINGS_SLOT) {
-        driver_erase_bank(0, driver_get_launch_slot(), SETTINGS_BANK);
-        settings_slot = 0;
+    if (settings_slot >= 127) {
+        settings_erase_slots();
     } else {
         settings_slot++;
     }
@@ -168,11 +214,13 @@ void settings_save(void) {
         settings_local.active_sram_slot = SRAM_SLOT_NONE;
     }
 
+    uint8_t bank = SETTINGS_BANK + (settings_slot >> 6);
+    uint16_t offset = settings_slot << 10;
     // write settings data
-    driver_write_slot(&settings_local, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10), sizeof(settings_local));
+    driver_write_slot(&settings_local, driver_get_launch_slot(), bank, offset, sizeof(settings_local));
     // write settings CRC
     uint16_t settings_crc = settings_calculate_crc();
-    driver_write_slot(&settings_crc, driver_get_launch_slot(), SETTINGS_BANK + (settings_slot >> 6), (settings_slot << 10) + 1022, 2);
+    driver_write_slot(&settings_crc, driver_get_launch_slot(), bank, offset + 1022, 2);
 
     settings_local.active_sram_slot = active_sram_slot;
 

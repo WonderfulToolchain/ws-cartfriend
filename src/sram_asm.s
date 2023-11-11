@@ -24,6 +24,7 @@
 
 #ifdef USE_SLOT_SYSTEM
 	.global sram_copy_to_buffer_check_flash
+	.align 2
 sram_copy_to_buffer_check_flash:
 	push	si
 	push	di
@@ -40,6 +41,7 @@ sram_copy_to_buffer_check_flash:
 	mov ds, ax
 	mov cx, 0x80 // 128 words = 256 bytes
 	cld
+	.align 2, 0x90
 sram_copy_buffer_checkff_loop:
 .rept 4
 	lodsw // 3 cycles
@@ -73,6 +75,7 @@ sram_copy_buffer_checkff_loop_done:
 
 	// 0x3000:offset => 0x1000:offset
 	.global sram_copy_from_bank1
+	.align 2
 sram_copy_from_bank1:
 	push	si
 	push	di

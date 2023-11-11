@@ -32,6 +32,7 @@
 #define SRAM_SLOT_FIRST_BOOT 0xFE
 #define SRAM_SLOT_NONE 0xFF
 
+extern bool settings_location_legacy;
 typedef struct __attribute__((packed)) {
 	uint8_t magic[4];
 	uint16_t version; // 6

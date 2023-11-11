@@ -32,11 +32,16 @@
 #ifdef USE_SLOT_SYSTEM
 #define USE_PARTIAL_WRITES
 
-static uint8_t sram_get_slot(uint8_t sram_slot) {
+static inline uint8_t sram_get_bank(uint8_t sram_slot, uint8_t sub_bank) {
     uint8_t slot = 0x80 | (sram_slot << 3);
-    if (slot >= 0xF8) {
+    uint8_t bank = slot + sub_bank;
+    // carve out a settings area between F40000 .. F5FFFF
+    // this allows writing a Pocket Challenge V2 bootloader there
+    if (!settings_location_legacy && bank >= 0xF4) bank += 2;
+    if (bank >= 0xFA) {
         error_critical(ERROR_CODE_SRAM_SLOT_OVERFLOW_UNKNOWN, sram_slot);
     }
+    
     return slot;
 }
 
@@ -44,7 +49,6 @@ bool sram_copy_to_buffer_check_flash(void* restrict s1, uint16_t offset);
 bool sram_copy_from_bank1(uint16_t offset, uint16_t words);
 
 static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
-    uint8_t rom_slot = sram_get_slot(sram_slot);
     uint8_t driver_slot = driver_get_launch_slot();
     uint8_t buffer[256];
     ui_pbar_state_t pbar = {
@@ -55,7 +59,11 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
     ui_pbar_init(&pbar);
 
     ui_reset_main_screen();
-    ui_puts_centered(false, 2, 0, lang_keys[is_restore ? LK_UI_MSG_RESTORE_SRAM : LK_UI_MSG_BACKUP_SRAM]);
+    if (settings_location_legacy) {
+        ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_MIGRATING]);
+    } else {
+        ui_puts_centered(false, 2, 0, lang_keys[is_restore ? LK_UI_MSG_RESTORE_SRAM : LK_UI_MSG_BACKUP_SRAM]);
+    }
 
     if (_CS >= 0x2000) {
         if (is_restore) {
@@ -67,7 +75,7 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
 
                 if (!(i & 31)) {
                     outportb(IO_BANK_RAM, i >> 5);
-                    uint8_t bank = (i >> 5) | rom_slot;
+                    uint8_t bank = sram_get_bank(sram_slot, i >> 5);
                     outportb(IO_BANK_ROM1, bank);
                     asm volatile("" ::: "memory");
                 }
@@ -81,7 +89,8 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
             // for backup, erase slots first
             for (uint8_t i = 0; i < 8; i++) {
                 ui_step_work_indicator();
-                driver_erase_bank(0, driver_slot, rom_slot + i);
+                uint8_t bank = sram_get_bank(sram_slot, i);
+                driver_erase_bank(0, driver_slot, bank);
             }
 
             pbar.step_max = 2048;
@@ -96,7 +105,7 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
                 }
                 ui_step_work_indicator();
 
-                uint8_t bank = (i >> 8) | rom_slot;
+                uint8_t bank = sram_get_bank(sram_slot, i >> 8);
                 uint16_t offset = (i << 8);
 
 #ifdef USE_PARTIAL_WRITES
@@ -152,16 +161,13 @@ void sram_erase(uint8_t sram_slot) {
             ui_pbar_draw(&pbar);
             ui_step_work_indicator();
 
-            uint8_t rom_slot = sram_get_slot(i >> 3);
-            if ((rom_slot | 0x80) < 0xF8) {
-                driver_erase_bank(0, driver_slot, rom_slot + (i & 7));
-            }
+            uint8_t rom_slot = sram_get_bank(i >> 3, i & 7);
+            driver_erase_bank(0, driver_slot, rom_slot);
         }
     } else {
         pbar.step_max = 8;
         ui_pbar_init(&pbar);
 
-        uint8_t rom_slot = sram_get_slot(sram_slot);
         uint8_t driver_slot = driver_get_launch_slot();
 
         for (uint8_t i = 0; i < 8; i++) {
@@ -169,9 +175,8 @@ void sram_erase(uint8_t sram_slot) {
             ui_pbar_draw(&pbar);
             ui_step_work_indicator();
 
-            if ((rom_slot | 0x80) < 0xF8) {
-                driver_erase_bank(0, driver_slot, rom_slot + i);
-            }
+            uint8_t rom_slot = sram_get_bank(sram_slot, i);
+            driver_erase_bank(0, driver_slot, rom_slot);
         }
     }
 

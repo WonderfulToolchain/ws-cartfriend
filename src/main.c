@@ -24,6 +24,7 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
+#include "ws/hardware.h"
 
 // Memory map:
 // 0x0000 - 0x1800: Heap
@@ -51,6 +52,9 @@ void main(void) {
 	sram_enable_fast();
 	cpu_irq_enable();
 
+	// shut off BIOS (required for driver init in PCv2 mode)
+	outportb(IO_SYSTEM_CTRL1, inportb(IO_SYSTEM_CTRL1) | SYSTEM_CTRL1_IPL_LOCKED);
+
 	ui_init();
 	driver_init();
 
@@ -67,6 +71,7 @@ void main(void) {
 
 	input_wait_clear(); // wait for input to calm down
 
+	// keep in sync with settings.c -> settings_load for now!
 	ui_set_current_tab(0);
 	wait_for_vblank();
 	ui_show();
