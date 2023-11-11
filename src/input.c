@@ -21,6 +21,7 @@
 
 // it's an uint16_t but we only want the low byte
 extern volatile uint8_t vbl_ticks;
+extern bool is_pcv2;
 
 uint16_t input_keys = 0;
 uint16_t input_keys_repressed = 0;
@@ -29,6 +30,21 @@ uint16_t input_pressed, input_held;
 
 void vblank_input_update(void) {
 	uint16_t keys = ws_keypad_scan();
+	if (is_pcv2) {
+		// WS:   ....yyyyxxxxbas.
+		// PCv2: ....pc1Cre1vud1l
+		// remapped:
+		//       ...p....urldcCe.
+		keys = 
+			  ((keys & 0x0800) <<  1) /*p*/
+			| ((keys & 0x0400) >>  7) /*c*/
+			| ((keys & 0x0100) >>  6) /*C*/
+			| ((keys & 0x0080) >>  1) /*r*/
+			| ((keys & 0x0040) >>  5) /*e*/
+			| ((keys & 0x0008) <<  4) /*u*/
+			| ((keys & 0x0004) <<  2) /*d*/
+			| ((keys & 0x0001) <<  5); /*l*/
+	}
 	input_keys |= keys;
 	input_keys_repressed |= (keys & input_keys_released);
 	input_keys_released |= (input_held & (~keys));

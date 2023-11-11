@@ -453,10 +453,16 @@ driver_erase_bank_finish:
 	retf
 
 	.align 2
-# check if the slot was correctly remounted
-# this is pretty bare-bones and could be better
-# clobbers ax
+// check if the slot was correctly remounted
+// this is pretty bare-bones and could be better
+// clobbers ax
 driver_slot_finish_error_check:
+// if BIOS unlocked, skip check
+// TODO: implement alternate check
+	in al, 0xA0
+	test al, 0x01
+	jz driver_slot_finish_error_check_skip
+
 	push ds
 	push si
 
@@ -476,10 +482,11 @@ driver_slot_finish_error_check:
 
 	pop si
 	pop ds
+driver_slot_finish_error_check_skip:
 	ret
 
-# 1-byte value in AL => 4 bytes in ES:DI (for display)
-# clobbers AX
+// 1-byte value in AL => 4 bytes in ES:DI (for display)
+// clobbers AX
 driver_emergency_error_handler_hex2int:
 	mov ah, 0
 	push ax
@@ -499,7 +506,7 @@ hex2int_09:
 	stosw
 	ret
 
-# AL has initial error number
+// AL has initial error number
 driver_write_error:
 	xor bx, bx
 	mov es, bx

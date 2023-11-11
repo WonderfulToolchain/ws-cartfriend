@@ -25,23 +25,33 @@
 #include "sram.h"
 #include "ui.h"
 #include "util.h"
+#include "ws/hardware.h"
 #include "ws/system.h"
 #include "xmodem.h"
 #include "../res/wsmonitor.h"
 
-#define MENU_TOOL_BFBCODE_XM 0
-#define MENU_TOOL_SRAMCODE_XM 1
-#define MENU_TOOL_WSMONITOR 2
-#define MENU_TOOL_WSMONITOR_RAM 3
+typedef enum {
+    MENU_TOOL_BFBCODE_XM,
+    MENU_TOOL_SRAMCODE_XM,
+    MENU_TOOL_WSMONITOR,
+    MENU_TOOL_WSMONITOR_RAM,
+    MENU_TOOL_IPL_SRAM
+} ui_tool_id_t;
 
 static uint16_t __far ui_tool_lks[] = {
     LK_UI_TOOLS_BFBCODE_XM,
     LK_UI_TOOLS_SRAMCODE_XM,
     LK_UI_TOOLS_WSMONITOR,
-    LK_UI_TOOLS_WSMONITOR_RAM
+    LK_UI_TOOLS_WSMONITOR_RAM,
+    LK_UI_TOOLS_IPL_SRAM
 };
 static void ui_tool_menu_build_line(uint8_t entry_id, void *userdata, char *buf, int buf_len, char *buf_right, int buf_right_len) {
     strncpy(buf, lang_keys[ui_tool_lks[entry_id]], buf_len);
+    if (entry_id >= MENU_TOOL_IPL_SRAM) {
+        buf_right[0] = '>';
+        buf_right[1] = '>';
+        buf_right[2] = 0;
+    }
 }
 
 static void ui_tool_xmodem_ui_message(uint16_t lk_msg) {
@@ -186,6 +196,7 @@ void ui_tools(void) {
     if ((_CS & 0xF000) != 0x1000) menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
     menu_list[i++] = MENU_TOOL_WSMONITOR;
     menu_list[i++] = MENU_TOOL_WSMONITOR_RAM;
+    if (!(inportb(IO_SYSTEM_CTRL1) & SYSTEM_CTRL1_IPL_LOCKED)) menu_list[i++] = MENU_TOOL_IPL_SRAM;
     menu_list[i++] = MENU_ENTRY_END;
 
     ui_menu_state_t menu = {
@@ -206,6 +217,16 @@ void ui_tools(void) {
             outportw(IO_DISPLAY_CTRL, 0);
             memcpy((uint8_t*) 0x3000, _wsmonitor_bin, _wsmonitor_bin_size);
             launch_ram(MK_FP(0x0300, 0x0000));
-        }
+        } break;
+        case MENU_TOOL_IPL_SRAM: {
+            sram_switch_to_slot(0xFF);
+            outportb(IO_BANK_RAM, 0);
+            if (inportb(IO_SYSTEM_CTRL1) & SYSTEM_CTRL1_COLOR) {
+                memcpy(MK_FP(0x1000, 0x0000), MK_FP(0xFE00, 0x0000), 0x2000);
+            } else {
+                memcpy(MK_FP(0x1000, 0x0000), MK_FP(0xFF00, 0x0000), 0x1000);
+            }
+            ui_dialog_run(0, 0, LK_DIALOG_SUCCESS, LK_DIALOG_OK);
+        } break;
     }
 }

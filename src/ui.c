@@ -355,6 +355,14 @@ bool ui_poll_events(void) {
             wait_for_vblank();
             return false;
         }
+    } else if (input_pressed & KEY_PCV2_PASS) {
+        if (ui_current_tab < (UI_TAB_TOTAL - 1)) {
+            ui_set_current_tab(ui_current_tab + 1);
+        } else {
+            ui_set_current_tab(0);
+        }
+        wait_for_vblank();
+        return false;
     }
 
     return true;

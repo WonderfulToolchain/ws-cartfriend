@@ -35,6 +35,9 @@
 // 0x3D00 - 0x3F00: Reserved
 
 volatile uint16_t vbl_ticks;
+bool is_pcv2;
+
+uint8_t keypad_pin_check(void);
 
 __attribute__((interrupt))
 void __far vblank_int_handler(void) {
@@ -53,7 +56,13 @@ void main(void) {
 	cpu_irq_enable();
 
 	// shut off BIOS (required for driver init in PCv2 mode)
-	outportb(IO_SYSTEM_CTRL1, inportb(IO_SYSTEM_CTRL1) | SYSTEM_CTRL1_IPL_LOCKED);
+	is_pcv2 = false;
+	if (!(inportb(IO_SYSTEM_CTRL1) & SYSTEM_CTRL1_IPL_LOCKED)) {
+	 	if (keypad_pin_check() & 2) {
+			// TODO: check IEEPROM for more accuracy?
+			is_pcv2 = true;
+		}
+	}
 
 	ui_init();
 	driver_init();
