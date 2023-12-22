@@ -1,6 +1,6 @@
 #pragma once
 /**
- * Copyright (c) 2022 Adrian Siekierka
+ * Copyright (c) 2023 Adrian Siekierka
  *
  * CartFriend is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free
@@ -16,26 +16,15 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
+// CartFriend - tests, for development use
+
 #include <stdbool.h>
 #include <stdint.h>
+#include <wonderful.h>
 #include <ws.h>
 
-extern uint16_t input_pressed, input_held;
-
-#define KEY_UP KEY_X1
-#define KEY_DOWN KEY_X3
-#define KEY_LEFT KEY_X4
-#define KEY_RIGHT KEY_X2
-
-#define KEY_AUP KEY_Y1
-#define KEY_ADOWN KEY_Y3
-#define KEY_ALEFT KEY_Y4
-#define KEY_ARIGHT KEY_Y2
-
-#define KEY_PCV2_PASS (1 << 12)
-
-void vblank_input_update(void);
-void input_reset(void);
-void input_update(void);
-void input_wait_clear(void);
-void input_wait_key(uint16_t key);
+/**
+ * @brief Run a save read/write test.
+ * @param slot Flash slot to test
+ */
+void test_save_read_write(uint8_t slot);

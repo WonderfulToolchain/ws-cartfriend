@@ -130,7 +130,7 @@ void sram_erase(uint8_t sram_slot) {
     ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_ERASE_SRAM]);
 
     ui_pbar_state_t pbar = {
-        .x = 1,
+        .x = 0,
         .y = 13,
         .width = 27
     };

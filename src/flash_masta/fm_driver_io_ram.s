@@ -337,6 +337,7 @@ driver_write_slot:
 	and ax, 0xFE00
 	jnz _dws_write_slow
 
+	xor bx, bx // clear BX (block address)
 	mov al, byte ptr [settings_local + 423]
 	test al, 0x02
 	jnz _dws_write_slow
@@ -345,7 +346,6 @@ _dws_write_fast:
 	dec cx
 
 	// start write
-	xor bx, bx
 	mov byte ptr es:[bx], 0x25
 	mov byte ptr es:[bx], cl
 
@@ -353,8 +353,7 @@ _dws_write_fast:
 	shr cx, 1
 	.balign 2, 0x90
 _dws_fast_loop:
-	movsw
-	loop _dws_fast_loop
+	rep movsw
 	jnc _dws_fast_loop2
 	movsb
 _dws_fast_loop2:
@@ -368,7 +367,6 @@ _dws_fast_loop2:
 	jmp dws_driver_flash_busyloop_until_done
 
 _dws_write_slow:
-	xor bx, bx
 	cld
 	.balign 2, 0x90
 _dws_loop:

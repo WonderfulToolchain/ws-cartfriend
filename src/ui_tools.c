@@ -220,11 +220,13 @@ void ui_tools(void) {
         } break;
         case MENU_TOOL_IPL_SRAM: {
             sram_switch_to_slot(0xFF);
-            outportb(IO_BANK_RAM, 0);
-            if (inportb(IO_SYSTEM_CTRL1) & SYSTEM_CTRL1_COLOR) {
-                memcpy(MK_FP(0x1000, 0x0000), MK_FP(0xFE00, 0x0000), 0x2000);
-            } else {
-                memcpy(MK_FP(0x1000, 0x0000), MK_FP(0xFF00, 0x0000), 0x1000);
+            for (int i = 0; i < 8; i++) {
+                outportb(IO_BANK_RAM, 0xF8 | i);
+                if (inportb(IO_SYSTEM_CTRL1) & SYSTEM_CTRL1_COLOR) {
+                    memcpy(MK_FP(0x1000, 0x0000), MK_FP(0xFE00, 0x0000), 0x2000);
+                } else {
+                    memcpy(MK_FP(0x1000, 0x0000), MK_FP(0xFF00, 0x0000), 0x1000);
+                }
             }
             ui_dialog_run(0, 0, LK_DIALOG_SUCCESS, LK_DIALOG_OK);
         } break;

@@ -622,6 +622,11 @@ uint16_t ui_popup_menu_run(ui_popup_menu_state_t *menu) {
 void ui_pbar_init(ui_pbar_state_t *state) {
     state->step = 0;
     state->step_last = 0;
+
+    if ((settings_local.flags1 & SETT_FLAGS1_WIDE_SCREEN) && state->x == 0 && state->width == 27) {
+        state->x += 1;
+        state->width -= 1;
+    }
 }
 
 void ui_pbar_draw(ui_pbar_state_t *state) {
