@@ -32,8 +32,8 @@
 #ifdef USE_SLOT_SYSTEM
 #define USE_PARTIAL_WRITES
 
-static inline uint8_t sram_get_bank(uint8_t sram_slot, uint8_t sub_bank) {
-    uint8_t slot = 0x80 | (sram_slot << 3);
+static inline uint8_t sram_get_bank(uint8_t sram_slot, uint16_t sub_bank) {
+    uint8_t slot = 0x80 + (sram_slot << 3);
     uint8_t bank = slot + sub_bank;
     // carve out a settings area between F40000 .. F5FFFF
     // this allows writing a Pocket Challenge V2 bootloader there
@@ -42,7 +42,7 @@ static inline uint8_t sram_get_bank(uint8_t sram_slot, uint8_t sub_bank) {
         error_critical(ERROR_CODE_SRAM_SLOT_OVERFLOW_UNKNOWN, sram_slot);
     }
     
-    return slot;
+    return bank;
 }
 
 bool sram_copy_to_buffer_check_flash(void* restrict s1, uint16_t offset);
@@ -94,6 +94,7 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
             }
 
             pbar.step_max = 2048;
+            uint8_t bank;
             for (uint16_t i = 0; i < 2048; i++) {
                 pbar.step = i;
                 if (!(i & 7)) {
@@ -101,11 +102,11 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
                     if (!(i & 255)) {
                         outportb(IO_BANK_RAM, i >> 8);
                         asm volatile("" ::: "memory");
+                        bank = sram_get_bank(sram_slot, i >> 8);
                     }
                 }
                 ui_step_work_indicator();
 
-                uint8_t bank = sram_get_bank(sram_slot, i >> 8);
                 uint16_t offset = (i << 8);
 
 #ifdef USE_PARTIAL_WRITES

@@ -15,6 +15,7 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 #include <string.h>
+#include "driver.h"
 #include "input.h"
 #include "tests.h"
 #include "settings.h"
@@ -26,7 +27,7 @@ const char __far msg_save_read_write_error1[] = "A %02X != %02X E";
 
 static bool test_save_read_write_error(uint16_t bank, uint16_t offset, uint8_t expected) {
     char msg[40];
-    uint8_t __far *ptr = MK_FP(0x1000, offset);
+    volatile uint8_t __far *ptr = MK_FP(0x1000, offset);
     if (*ptr != expected) {
         ui_reset_main_screen();
 
@@ -70,7 +71,7 @@ void test_save_read_write(uint8_t slot) {
     // Write test pattern to SRAM
     for (int i = 0; i < 8; i++) {
         outportb(IO_BANK_RAM, i);
-        uint8_t __far *ptr = MK_FP(0x1000, 0x0000);
+        volatile uint8_t __far *ptr = MK_FP(0x1000, 0x0000);
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ptr++) {
                 *ptr = j + k - i;
@@ -97,7 +98,7 @@ void test_save_read_write(uint8_t slot) {
     // Write test pattern to SRAM
     for (int i = 0; i < 8; i++) {
         outportb(IO_BANK_RAM, i);
-        uint8_t __far *ptr = MK_FP(0x1000, 0x0000);
+        volatile uint8_t __far *ptr = MK_FP(0x1000, 0x0000);
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ptr++) {
                 *ptr = k < j ? 0xFF : j;
