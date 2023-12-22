@@ -122,3 +122,11 @@ void input_wait_key(uint16_t key) {
 	input_update();
 }
 
+void input_wait_any_key(void) {
+	input_wait_clear();
+	do {
+		input_reset();
+		wait_for_vblank();
+	} while (input_keys == 0);
+	input_update();
+}

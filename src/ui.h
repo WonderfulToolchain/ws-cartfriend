@@ -70,6 +70,8 @@ uint8_t ui_set_language(uint8_t id);
 #define UI_GLYPH_TRIANGLE_UL 23
 #define UI_GLYPH_PASSAGE 127
 #define UI_GLYPH_HORIZONTAL_PBAR 183
+#define UI_GLYPH_CHECK 216
+#define UI_GLYPH_CROSS 88
 
 // Tabs
 

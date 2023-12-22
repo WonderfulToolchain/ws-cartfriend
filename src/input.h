@@ -39,3 +39,4 @@ void input_reset(void);
 void input_update(void);
 void input_wait_clear(void);
 void input_wait_key(uint16_t key);
+void input_wait_any_key(void);

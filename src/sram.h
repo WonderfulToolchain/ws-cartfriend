@@ -21,6 +21,8 @@
 #include <wonderful.h>
 #include <ws.h>
 
+extern bool sram_ui_quiet;
+
 static inline void sram_enable_fast(void) {
     outportb(IO_SYSTEM_CTRL2, inportb(IO_SYSTEM_CTRL2) & (~(SYSTEM_CTRL2_SRAM_WAIT | SYSTEM_CTRL2_CART_IO_WAIT)));
 }

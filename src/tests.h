@@ -16,7 +16,7 @@
  * with CartFriend. If not, see <https://www.gnu.org/licenses/>. 
  */
 
-// CartFriend - tests, for development use
+// CartFriend - tests
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -27,4 +27,4 @@
  * @brief Run a save read/write test.
  * @param slot Flash slot to test
  */
-void test_save_read_write(uint8_t slot);
+bool test_save_read_write(uint8_t x, uint8_t y, uint8_t slot);

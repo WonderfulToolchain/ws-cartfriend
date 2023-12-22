@@ -20,9 +20,11 @@
 #include <ws.h>
 #include "config.h"
 #include "driver.h"
+#include "input.h"
 #include "lang.h"
 #include "settings.h"
 #include "sram.h"
+#include "tests.h"
 #include "ui.h"
 #include "util.h"
 
@@ -199,6 +201,8 @@ static void ui_opt_menu_erase_sram_build_line(uint8_t entry_id, void *userdata, 
         strncpy(buf, lang_keys[LK_UI_ERASE_ALL_SAVE_DATA], buf_len);
     } else if (entry_id == 0xEE) {
         strncpy(buf, lang_keys[LK_UI_ERASE_UNDO_SRAM], buf_len);
+    } else if (entry_id == 0xED) {
+        strncpy(buf, lang_keys[LK_UI_ERASE_TEST_ALL_SAVE_DATA], buf_len);
     }
 }
 
@@ -359,6 +363,7 @@ Reselect:
             menu_list[i++] = j;
         }
         menu_list[i++] = 0xEF;
+        menu_list[i++] = 0xED;
         menu_list[i++] = 0xEE;
         menu_list[i] = MENU_ENTRY_END;
 
@@ -390,6 +395,20 @@ SaveMgmtReselect:
             } else if (result == 0xEE) {
                 // discard in-SRAM changes
                 settings_local.active_sram_slot = 0xFF;
+                settings_mark_changed();
+            } else if (result == 0xED) {
+                // erase + test everything
+                ui_reset_main_screen();
+                ui_puts_centered(false, 1, 0, lang_keys[LK_UI_ERASE_TEST_LINE1]);
+                ui_puts_centered(false, 2, 0, lang_keys[LK_UI_PLEASE_WAIT]);
+                for (int i = 0; i < SRAM_SLOTS; i++) {
+                    ui_bg_putc(13 * (i / 10), 4 + (i % 10), 'A' + i, 0);
+                }
+                for (int i = 0; i < SRAM_SLOTS; i++) {
+                    test_save_read_write(13 * (i / 10) + 2, 4 + (i % 10), i);
+                }
+                ui_puts_centered(false, 2, 0, lang_keys[LK_UI_PRESS_ANY_KEY]);
+                input_wait_any_key();
                 settings_mark_changed();
             } else {
                 return;

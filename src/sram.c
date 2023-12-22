@@ -32,6 +32,8 @@
 #ifdef USE_SLOT_SYSTEM
 #define USE_PARTIAL_WRITES
 
+bool sram_ui_quiet = false;
+
 static inline uint8_t sram_get_bank(uint8_t sram_slot, uint16_t sub_bank) {
     uint8_t slot = 0x80 + (sram_slot << 3);
     uint8_t bank = slot + sub_bank;
@@ -58,11 +60,13 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
     };
     ui_pbar_init(&pbar);
 
-    ui_reset_main_screen();
-    if (settings_location_legacy) {
-        ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_MIGRATING]);
-    } else {
-        ui_puts_centered(false, 2, 0, lang_keys[is_restore ? LK_UI_MSG_RESTORE_SRAM : LK_UI_MSG_BACKUP_SRAM]);
+    if (!sram_ui_quiet) {
+        ui_reset_main_screen();
+        if (settings_location_legacy) {
+            ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_MIGRATING]);
+        } else {
+            ui_puts_centered(false, 2, 0, lang_keys[is_restore ? LK_UI_MSG_RESTORE_SRAM : LK_UI_MSG_BACKUP_SRAM]);
+        }
     }
 
     if (_CS >= 0x2000) {
@@ -70,7 +74,9 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
             pbar.step_max = 256;
             for (uint16_t i = 0; i < 256; i++) {
                 pbar.step = i;
-                ui_pbar_draw(&pbar);
+                if (!sram_ui_quiet) {
+                    ui_pbar_draw(&pbar);
+                }
                 ui_step_work_indicator();
 
                 if (!(i & 31)) {
@@ -98,7 +104,9 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
             for (uint16_t i = 0; i < 2048; i++) {
                 pbar.step = i;
                 if (!(i & 7)) {
-                    ui_pbar_draw(&pbar);
+                    if (!sram_ui_quiet) {
+                        ui_pbar_draw(&pbar);
+                    }
                     if (!(i & 255)) {
                         outportb(IO_BANK_RAM, i >> 8);
                         asm volatile("" ::: "memory");
@@ -127,8 +135,10 @@ static void sram_backup_restore_slot(uint8_t sram_slot, bool is_restore) {
 }
 
 void sram_erase(uint8_t sram_slot) {
-    ui_reset_main_screen();
-    ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_ERASE_SRAM]);
+    if (!sram_ui_quiet) {
+        ui_reset_main_screen();
+        ui_puts_centered(false, 2, 0, lang_keys[LK_UI_MSG_ERASE_SRAM]);
+    }
 
     ui_pbar_state_t pbar = {
         .x = 0,
@@ -142,7 +152,7 @@ void sram_erase(uint8_t sram_slot) {
 
         for (uint16_t i = 0; i < 128; i++) { /* 16 * 8 */
             pbar.step = i;
-            ui_pbar_draw(&pbar);
+            if (!sram_ui_quiet) ui_pbar_draw(&pbar);
             ui_step_work_indicator();
 
             ws_bank_ram_set(i >> 4);
@@ -159,7 +169,7 @@ void sram_erase(uint8_t sram_slot) {
 
         for (uint8_t i = 0; i < pbar.step_max; i++) {
             pbar.step = i;
-            ui_pbar_draw(&pbar);
+            if (!sram_ui_quiet) ui_pbar_draw(&pbar);
             ui_step_work_indicator();
 
             uint8_t rom_slot = sram_get_bank(i >> 3, i & 7);
@@ -173,7 +183,7 @@ void sram_erase(uint8_t sram_slot) {
 
         for (uint8_t i = 0; i < 8; i++) {
             pbar.step = i;
-            ui_pbar_draw(&pbar);
+            if (!sram_ui_quiet) ui_pbar_draw(&pbar);
             ui_step_work_indicator();
 
             uint8_t rom_slot = sram_get_bank(sram_slot, i);

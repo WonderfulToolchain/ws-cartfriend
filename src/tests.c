@@ -23,105 +23,117 @@
 #include "ui.h"
 #include "ws/hardware.h"
 
-const char __far msg_save_read_write_error1[] = "A %02X != %02X E";
+const char __far msg_save_read_write_error1[] = "%02X%04X %02X";
 
-static bool test_save_read_write_error(uint16_t bank, uint16_t offset, uint8_t expected) {
-    char msg[40];
+__attribute__((noinline))
+static void test_save_read_write_error_emit(uint8_t x, uint8_t y, uint16_t bank, uint16_t offset, uint8_t expected) {
+    settings_local.active_sram_slot = 0xFF;
+    outportb(IO_BANK_RAM, 0);
+    sram_ui_quiet = false;
+
+    ui_clear_work_indicator();
+    ui_update_indicators();
+
+    ui_bg_printf(x, y, 0, msg_save_read_write_error1, bank, offset, expected);
+}
+
+__attribute__((always_inline))
+static inline bool test_save_read_write_error(uint8_t x, uint8_t y, uint16_t bank, uint16_t offset, uint8_t expected) {
     volatile uint8_t __far *ptr = MK_FP(0x1000, offset);
-    if (*ptr != expected) {
-        ui_reset_main_screen();
-
-        ui_bg_printf_centered(2, 0, lang_keys[LK_UI_ERROR], bank, offset);
-        ui_bg_printf_centered(4, 0, msg_save_read_write_error1, *ptr, expected);
-
-        input_wait_key(KEY_A);
+    if (*ptr != expected) {    
+        test_save_read_write_error_emit(x, y, bank, offset, expected);
         return true;
     } else {
         return false;
     }
 }
 
-void test_save_read_write(uint8_t slot) {
+bool test_save_read_write(uint8_t x, uint8_t y, uint8_t slot) {
     settings_local.active_sram_slot = slot;
+    sram_ui_quiet = true;
 
-    // Clear SRAM
-    for (int i = 0; i < 8; i++) {
-        outportb(IO_BANK_RAM, i);
-        memset(MK_FP(0x1000, 0x0000), 0, 16384);
-        memset(MK_FP(0x1000, 0x4000), 0, 16384);
-        memset(MK_FP(0x1000, 0x8000), 0, 16384);
-        memset(MK_FP(0x1000, 0xC000), 0, 16384);
-    }
-
-    // Read/Write SRAM
-    sram_switch_to_slot(0xFF);
-    sram_switch_to_slot(slot);
-
-    // Compare SRAM
-    for (int i = 0; i < 8; i++) {
-        outportb(IO_BANK_RAM, i);
-        uint16_t ofs = 0;
-        for (int j = 0; j < 256; j++) {
-            for (int k = 0; k < 256; k++, ofs++) {
-                if (test_save_read_write_error(i, ofs, 0)) return;
-            }
-        }
-    }
+    // Erase SRAM slot
+    sram_erase(slot);
 
     // Write test pattern to SRAM
     for (int i = 0; i < 8; i++) {
+        ui_step_work_indicator();
         outportb(IO_BANK_RAM, i);
         volatile uint8_t __far *ptr = MK_FP(0x1000, 0x0000);
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ptr++) {
                 *ptr = j + k - i;
-                if (test_save_read_write_error(i | 0x1000, FP_OFF(ptr), j + k - i)) return;
+                if (test_save_read_write_error(x, y, i, FP_OFF(ptr), j + k - i)) return false;
             }
         }
     }
 
+    ui_bg_putc(x, y, '.', 0);
+
     // Read/Write SRAM
     sram_switch_to_slot(0xFF);
+    ui_bg_putc(x + 1, y, '.', 0);
     sram_switch_to_slot(slot);
+    ui_bg_putc(x + 2, y, '.', 0);
 
     // Compare SRAM
     for (int i = 0; i < 8; i++) {
+        ui_step_work_indicator();
         outportb(IO_BANK_RAM, i);
         uint16_t ofs = 0;
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ofs++) {
-                if (test_save_read_write_error(i, ofs, j + k - i)) return;
+                if (test_save_read_write_error(x, y, i | 0x10, ofs, j + k - i)) return false;
             }
         }
     }
 
+    ui_bg_putc(x + 3, y, '.', 0);
+
     // Write test pattern to SRAM
     for (int i = 0; i < 8; i++) {
+        ui_step_work_indicator();
         outportb(IO_BANK_RAM, i);
         volatile uint8_t __far *ptr = MK_FP(0x1000, 0x0000);
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ptr++) {
-                *ptr = k < j ? 0xFF : j;
-                if (test_save_read_write_error(i | 0x1000, FP_OFF(ptr), k < j ? 0xFF : j)) return;
+                *ptr = (j + k - i) ^ 0xFF;
+                if (test_save_read_write_error(x, y, i | 0x20, FP_OFF(ptr), (j + k - i) ^ 0xFF)) return false;
             }
         }
     }
 
+    ui_bg_putc(x + 4, y, '.', 0);
+
     // Read/Write SRAM
     sram_switch_to_slot(0xFF);
+    ui_bg_putc(x + 5, y, '.', 0);
     sram_switch_to_slot(slot);
+    ui_bg_putc(x + 6, y, '.', 0);
 
     // Compare SRAM
     for (int i = 0; i < 8; i++) {
+        ui_step_work_indicator();
         outportb(IO_BANK_RAM, i);
         uint16_t ofs = 0;
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ofs++) {
-                if (test_save_read_write_error(i, ofs, k < j ? 0xFF : j)) return;
+                if (test_save_read_write_error(x, y, i | 0x30, ofs, (j + k - i) ^ 0xFF)) return false;
             }
         }
     }
 
+    ui_bg_putc(x + 7, y, UI_GLYPH_CHECK, 0);
+
+    // Erase SRAM slot
+    sram_erase(slot);
+
     settings_local.active_sram_slot = 0xFF;
     outportb(IO_BANK_RAM, 0);
+    sram_ui_quiet = false;
+
+    ui_clear_work_indicator();
+    ui_update_indicators();
+
+    return true;
 }
