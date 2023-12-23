@@ -7,6 +7,11 @@ WonderSwan flashcart launcher/utility. Work in progress.
   * WS Flash Masta (currently in first slot only) - target `flash_masta`
   * Generic (no flashcart-specific features) - target `generic`
 
+## Frequently asked questions
+
+* **Q:** I am experiencing issues with the save backup/restore functionality.
+* **A:** As of CartFriend 0.2.0, you can use the "Settings -> Save data management -> Erase+Test all save data" option to test the save functionality of your cartridge's NOR flash chip. Note that this will erase all existing save data!
+
 ## Usage
 
 * Y4/Y2 - change visible tab
