@@ -63,7 +63,18 @@ bool test_save_read_write(uint8_t x, uint8_t y, uint8_t slot) {
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ptr++) {
                 *ptr = j + k - i;
-                if (test_save_read_write_error(x, y, i, FP_OFF(ptr), j + k - i)) return false;
+            }
+        }
+    }
+
+    // Compare SRAM
+    for (int i = 0; i < 8; i++) {
+        ui_step_work_indicator();
+        outportb(IO_BANK_RAM, i);
+        uint16_t ofs = 0;
+        for (int j = 0; j < 256; j++) {
+            for (int k = 0; k < 256; k++, ofs++) {
+                if (test_save_read_write_error(x, y, i, ofs, j + k - i)) return false;
             }
         }
     }
@@ -98,7 +109,18 @@ bool test_save_read_write(uint8_t x, uint8_t y, uint8_t slot) {
         for (int j = 0; j < 256; j++) {
             for (int k = 0; k < 256; k++, ptr++) {
                 *ptr = (j + k - i) ^ 0xFF;
-                if (test_save_read_write_error(x, y, i | 0x20, FP_OFF(ptr), (j + k - i) ^ 0xFF)) return false;
+            }
+        }
+    }
+
+    // Compare SRAM
+    for (int i = 0; i < 8; i++) {
+        ui_step_work_indicator();
+        outportb(IO_BANK_RAM, i);
+        uint16_t ofs = 0;
+        for (int j = 0; j < 256; j++) {
+            for (int k = 0; k < 256; k++, ofs++) {
+                if (test_save_read_write_error(x, y, i | 0x20, ofs, (j + k - i) ^ 0xFF)) return false;
             }
         }
     }

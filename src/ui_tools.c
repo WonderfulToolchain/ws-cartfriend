@@ -196,7 +196,9 @@ void ui_tools(void) {
     if ((_CS & 0xF000) != 0x1000) menu_list[i++] = MENU_TOOL_SRAMCODE_XM;
     menu_list[i++] = MENU_TOOL_WSMONITOR;
     menu_list[i++] = MENU_TOOL_WSMONITOR_RAM;
+#ifndef TARGET_flash_masta
     if (!(inportb(IO_SYSTEM_CTRL1) & SYSTEM_CTRL1_IPL_LOCKED)) menu_list[i++] = MENU_TOOL_IPL_SRAM;
+#endif
     menu_list[i++] = MENU_ENTRY_END;
 
     ui_menu_state_t menu = {
@@ -218,6 +220,7 @@ void ui_tools(void) {
             memcpy((uint8_t*) 0x3000, _wsmonitor_bin, _wsmonitor_bin_size);
             launch_ram(MK_FP(0x0300, 0x0000));
         } break;
+#ifndef TARGET_flash_masta
         case MENU_TOOL_IPL_SRAM: {
             sram_switch_to_slot(0xFF);
             for (int i = 0; i < 8; i++) {
@@ -230,5 +233,6 @@ void ui_tools(void) {
             }
             ui_dialog_run(0, 0, LK_DIALOG_SUCCESS, LK_DIALOG_OK);
         } break;
+#endif
     }
 }
