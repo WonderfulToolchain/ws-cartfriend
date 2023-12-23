@@ -38,6 +38,7 @@ uint8_t settings_slot;
 settings_t settings_local;
 bool settings_changed;
 bool settings_location_legacy;
+bool settings_first_boot = false;
 const char __far settings_magic[4] = {'w', 'f', 'C', 'F'};
 
 void settings_reset(void) {
@@ -152,6 +153,7 @@ void settings_load(void) {
 #else
     if (try_settings_load(SETTINGS_BANK, 1, 127)) {
         settings_migrate();
+        settings_first_boot = false;
         return;
     }
 
@@ -177,11 +179,13 @@ void settings_load(void) {
         settings_slot = 127;
         settings_changed = true;
         settings_save();
+        settings_first_boot = false;
         return;
     }
 
     // New install.
     settings_reset();
+    settings_first_boot = true;
 #endif
 }
 
